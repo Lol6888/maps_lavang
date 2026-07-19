@@ -6,6 +6,7 @@ import {
   displayCalFrom, campusBearing, realToDisplay,
 } from '../map/calibration.js'
 import { CATEGORIES } from '../data/pois.js'
+import { BACKDROP } from '../data/backdrop.js'
 import { iconSvg } from './Icon.jsx'
 
 const MAP_URLS = {
@@ -43,7 +44,22 @@ export default function MapView({
   const accCircleRef = useRef(null)
   const cornerMarkersRef = useRef(null)
   const routeLayerRef = useRef(null)
+  const backdropRef = useRef(null)
   const handlersRef = useRef({})
+
+  // Góc ảnh nền vệ tinh, đưa từ tọa độ thật sang khung đang hiển thị
+  const backdropCorners = useMemo(() => {
+    const toDisplay = (ll) => {
+      const { u, v } = latLngToUv(cal, ll)
+      const p = uvToLatLng(frame, u, v)
+      return [p.lat, p.lng]
+    }
+    return {
+      topleft: toDisplay(BACKDROP.topleft),
+      topright: toDisplay(BACKDROP.topright),
+      bottomleft: toDisplay(BACKDROP.bottomleft),
+    }
+  }, [cal, frame])
 
   // callbacks/props mới nhất cho các listener gắn 1 lần
   handlersRef.current = { onSelectPoi, onUserInteract, onCalChange, cal, frame, mode }
@@ -53,10 +69,13 @@ export default function MapView({
     const map = L.map(divRef.current, {
       zoomControl: false,
       attributionControl: false,
-      minZoom: 14,
+      // Zoom nhỏ hơn mức này sẽ lộ mép ảnh vệ tinh nền
+      minZoom: 15.75,
       maxZoom: 21,
       zoomSnap: 0.25,
     })
+    // Ảnh vệ tinh nền nằm dưới ảnh bản đồ (overlayPane có zIndex 400)
+    map.createPane('backdropPane').style.zIndex = 350
     map.setView(campusCenter(frame), 16.5)
     map.on('dragstart', () => handlersRef.current.onUserInteract?.())
     map.on('click', (e) => {
@@ -74,9 +93,13 @@ export default function MapView({
     mapRef.current = map
     return () => {
       map.remove()
+      // Phải xoá hết ref: các effect dùng ref để biết layer đã tạo hay chưa,
+      // ref cũ sót lại sẽ khiến layer không bao giờ được thêm vào map mới.
       mapRef.current = null
       overlayRef.current = null
       satRef.current = null
+      backdropRef.current = null
+      routeLayerRef.current = null
       userMarkerRef.current = null
       accCircleRef.current = null
       cornerMarkersRef.current = null
@@ -97,6 +120,30 @@ export default function MapView({
       satRef.current = null
     }
   }, [mode])
+
+  // ---- Ảnh vệ tinh nền (chế độ thường; calibrate đã có tile sống) ----
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+    if (mode === 'calibrate') {
+      if (backdropRef.current) {
+        map.removeLayer(backdropRef.current)
+        backdropRef.current = null
+      }
+      return
+    }
+    if (!backdropRef.current) {
+      backdropRef.current = rotatedImageOverlay(
+        BACKDROP.url,
+        backdropCorners.topleft, backdropCorners.topright, backdropCorners.bottomleft,
+        { pane: 'backdropPane' }
+      ).addTo(map)
+    } else {
+      backdropRef.current.setCorners(
+        backdropCorners.topleft, backdropCorners.topright, backdropCorners.bottomleft
+      )
+    }
+  }, [mode, backdropCorners])
 
   // ---- Ảnh bản đồ overlay ----
   useEffect(() => {
@@ -128,11 +175,15 @@ export default function MapView({
     const map = mapRef.current
     if (!map) return
     if (mode === 'normal') {
-      const corners = [
-        L.latLng(frame.topleft), L.latLng(frame.topright), L.latLng(frame.bottomleft),
-        uvToLatLng(frame, 1, 1),
-      ]
-      map.setMaxBounds(L.latLngBounds(corners).pad(0.6))
+      // Ảnh nền là hình vuông 2800m bị xoay ~14.4°, nên vùng an toàn (không lộ
+      // mép chéo) nhỏ hơn hình bao của nó: ±900m ngang, ±1150m dọc quanh tâm.
+      // Quy ra đơn vị uv của khung hiển thị (khuôn viên rộng ~390m, cao ~694m).
+      const PAN_U = 900 / 390
+      const PAN_V = 1150 / 694
+      map.setMaxBounds(L.latLngBounds([
+        uvToLatLng(frame, 0.5 - PAN_U, 0.5 - PAN_V),
+        uvToLatLng(frame, 0.5 + PAN_U, 0.5 + PAN_V),
+      ]))
     } else {
       map.setMaxBounds(null)
     }

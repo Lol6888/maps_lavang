@@ -36,6 +36,13 @@ như Google Maps.
 - **React + Vite + Leaflet** (không dùng react-leaflet).
 - Ảnh bản đồ vẽ lại (7843×13934) được **georeference** vào tọa độ thật bằng 3 điểm neo lấy từ OSM (Vương Cung Thánh Đường, Tháp chuông, hồ trái) — fit similarity transform, residual ≤ 2.1m, validate với 5 điểm độc lập sai số ≤ ~7m. Xem `src/map/calibration.js`.
 - **Khung hiển thị "campus-up"**: ảnh gốc xoay ~194° so với hướng Bắc. Để artwork hiển thị thẳng đứng như thiết kế, chế độ thường vẽ mọi thứ trong khung giả đặt ảnh thẳng trục; tọa độ GPS thật được đổi qua (u,v) của khung thật rồi chiếu vào khung hiển thị (`realToDisplay`). Mũi tên heading được trừ góc xoay khuôn viên (~165.6°).
+- **Ảnh vệ tinh nền** (`scripts/gen-backdrop.mjs` → `public/map/backdrop.webp` + `src/data/backdrop.js`):
+  vùng 2800×2800m quanh khuôn viên, ghép từ tile **Esri World Imagery** ở zoom 16 (~2.3 m/px, 210KB).
+  Không dùng tile sống vì chế độ thường xoay bản đồ campus-up còn tile luôn hướng Bắc — sẽ lệch ~194°.
+  Ảnh tĩnh được đặt qua đúng phép biến đổi thật→hiển thị nên xoay khớp artwork, và chạy được offline.
+  `minZoom` 15.75 và giới hạn pan ±900m×±1150m giữ khung hình luôn nằm trong vùng an toàn của ảnh nền
+  (ảnh nền là hình vuông bị xoay nên vùng an toàn nhỏ hơn hình bao của nó).
+  Nguồn ảnh phải được ghi công trên giao diện — xem lưu ý bản quyền bên dưới.
 - **POI** lưu theo tọa độ ảnh `(u, v) ∈ [0,1]` trong `src/data/pois.js` — bám vào ảnh, không phụ thuộc calibration.
 - **GPS** (`src/hooks/useGeolocation.js`): `watchPosition` + `enableHighAccuracy`, bỏ qua fix có accuracy > 30m (chỉ làm mờ marker), deadzone 2m, làm mượt EMA, vòng tròn accuracy, heading khi đang di chuyển.
 - **Chỉ đường** (`src/map/router.js` + `src/data/walkmask.js`): mặt nạ lối đi bộ được **trích tự động từ chính ảnh bản đồ** — lối lát gạch trong khuôn viên là màu be ấm (`sat 0.05–0.32`, `r−b 12–48`), còn vùng ngoài khuôn viên trong ảnh là xám thật nên bị loại; sau đó lấy thành phần liên thông lớn nhất (lưới 320×569, mỗi ô ~1.2m). A* 8 hướng cấm cắt góc chéo, rút gọn bằng line-of-sight.
@@ -55,6 +62,20 @@ như Google Maps.
 
 - `assets-src/` — ảnh gốc độ phân giải đầy đủ (2 lớp: có cây / không cây) + ảnh tham chiếu vị trí POI.
 - `public/map/` — bản downscale 2048/4096px cho web (tạo bằng ffmpeg).
+
+## Lưu ý bản quyền ảnh vệ tinh
+
+Ảnh nền lấy từ **Esri World Imagery**, KHÔNG phải Google Maps — lấy tile Google bằng URL
+trực tiếp là vi phạm điều khoản của Google.
+
+App đang **lưu sẵn (cache) tile Esri vào repo** dưới dạng một ảnh tĩnh. Dùng tile sống kèm ghi công
+là cách dùng phổ thông và rõ ràng được phép; còn xuất/lưu tile ra file thì Esri có dịch vụ riêng
+cho việc đó (*World Imagery (for Export)*). **Trước khi phát hành chính thức nên kiểm tra lại điều khoản
+hoặc đổi sang nguồn có giấy phép dứt khoát** (ví dụ ESA Sentinel-2 cloudless, CC BY 4.0) — chỉ cần
+đổi `URL` trong `scripts/gen-backdrop.mjs` rồi chạy lại, phần còn lại không phải sửa.
+
+Dòng ghi công `Ảnh vệ tinh: Esri, Maxar, Earthstar Geographics` hiển thị ở góc dưới bản đồ và
+là bắt buộc — đừng xoá.
 
 ## Lưu ý độ chính xác
 

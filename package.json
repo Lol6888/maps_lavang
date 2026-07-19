@@ -17,6 +17,7 @@
   "devDependencies": {
     "@material-design-icons/svg": "^0.14.15",
     "@vitejs/plugin-react": "^4.3.4",
+    "sharp": "^0.35.3",
     "vite": "^6.0.0"
   }
 }
