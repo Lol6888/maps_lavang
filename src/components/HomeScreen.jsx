@@ -3,9 +3,12 @@ import { CATEGORIES, POIS } from '../data/pois.js'
 import { straightDistance, formatDistance } from '../map/geo.js'
 import Icon from './Icon.jsx'
 
-// Màn hình đầu: chọn địa điểm muốn tới, hoặc mở bản đồ tổng quan.
+// Màn hình đầu: 4 phân khu thu gọn được, mở ra là lưới địa điểm.
 export default function HomeScreen({ cal, position, onPick, onOverview, geoStatus }) {
   const [query, setQuery] = useState('')
+  const [openCats, setOpenCats] = useState(() => new Set())
+
+  const searching = query.trim().length > 0
 
   const groups = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -24,6 +27,17 @@ export default function HomeScreen({ cal, position, onPick, onOverview, geoStatu
       }))
       .filter((g) => g.items.length > 0)
   }, [cal, position, query])
+
+  // Đang tìm kiếm thì mở hết để thấy ngay kết quả
+  const isOpen = (key) => searching || openCats.has(key)
+  const toggle = (key) => {
+    setOpenCats((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
 
   return (
     <div className="home">
@@ -63,38 +77,43 @@ export default function HomeScreen({ cal, position, onPick, onOverview, geoStatu
 
       {groups.length === 0 && <div className="home-empty">Không tìm thấy địa điểm nào</div>}
 
-      {groups.map((g) => (
-        <section key={g.key} className="home-group">
-          <h2>{g.meta.label}</h2>
-          {g.items.map((p) => (
-            <button
-              key={p.id}
-              className="place-row"
-              onClick={() => onPick(p)}
-              style={{ '--c': g.meta.color, '--c-bg': `${g.meta.color}1f` }}
-            >
-              <span className="place-avatar">
-                <Icon name={p.icon} size={22} />
-              </span>
-              <span className="place-body">
-                <span className="place-name">{p.name}</span>
-                <span className="place-meta">
-                  {p.dist != null ? (
-                    <>
-                      <b>{formatDistance(p.dist)}</b> · {g.meta.label}
-                    </>
-                  ) : (
-                    g.meta.label
-                  )}
+      <div className="sections">
+        {groups.map((g) => {
+          const open = isOpen(g.key)
+          const nearest = g.items[0]?.dist
+          return (
+            <section key={g.key} className="section" style={{ '--c': g.meta.color, '--c-bg': `${g.meta.color}1f` }}>
+              <button className="section-head" onClick={() => toggle(g.key)} aria-expanded={open}>
+                <span className="section-avatar">
+                  <Icon name={g.meta.icon} size={22} />
                 </span>
-              </span>
-              <span className="place-go">
-                <Icon name="DirectionsWalk" size={20} />
-              </span>
-            </button>
-          ))}
-        </section>
-      ))}
+                <span className="section-text">
+                  <span className="section-name">{g.meta.label}</span>
+                  <span className="section-meta">
+                    {g.items.length} địa điểm
+                    {nearest != null && <> · gần nhất {formatDistance(nearest)}</>}
+                  </span>
+                </span>
+                <Icon name={open ? 'ExpandLess' : 'ExpandMore'} size={24} className="section-chevron" />
+              </button>
+
+              {open && (
+                <div className="tile-grid">
+                  {g.items.map((p) => (
+                    <button key={p.id} className="tile" onClick={() => onPick(p)}>
+                      <span className="tile-icon">
+                        <Icon name={p.icon} size={20} />
+                      </span>
+                      <span className="tile-name">{p.name}</span>
+                      {p.dist != null && <span className="tile-dist">{formatDistance(p.dist)}</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </section>
+          )
+        })}
+      </div>
     </div>
   )
 }

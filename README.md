@@ -11,7 +11,7 @@ npm run dev
 
 ## Luồng sử dụng
 
-1. **Màn hình chọn địa điểm** — thẻ (card) các địa điểm gom theo danh mục, có ô tìm kiếm. Khi đã có GPS, mỗi thẻ hiện khoảng cách và các thẻ tự sắp theo gần → xa.
+1. **Màn hình chọn địa điểm** — 4 phân khu thu gọn được (mặc định đóng hết để thấy toàn cảnh trong một màn hình), mỗi phân khu hiện số địa điểm và khoảng cách gần nhất; mở ra là lưới 2 cột. Ô tìm kiếm tự mở các phân khu có kết quả. Khi đã có GPS, mỗi ô hiện khoảng cách và tự sắp theo gần → xa.
 2. **Chế độ dẫn đường** — chọn một thẻ, bản đồ vẽ đường đi bộ từ chỗ user đang đứng tới đích, kèm quãng đường và số phút đi bộ; tới nơi (<15m) báo "Bạn đã tới nơi".
 3. **Bản đồ tổng quan** — nút "Xem toàn bộ bản đồ" (hoặc 🗺️ khi đang dẫn đường) để xem tự do mọi điểm, lọc theo danh mục, chạm marker → "Chỉ đường tới đây".
 4. **Bật/tắt lớp cây** — nút 🌳/🚫 ở mọi chế độ bản đồ, tắt cây để nhìn rõ lối đi.
