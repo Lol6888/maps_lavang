@@ -1,38 +1,85 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import MapView from './components/MapView.jsx'
+import HomeScreen from './components/HomeScreen.jsx'
 import { CATEGORIES, POIS } from './data/pois.js'
-import { useGeolocation, distMeters } from './hooks/useGeolocation.js'
+import { MASK_W, MASK_H } from './data/walkmask.js'
+import { findRoute } from './map/router.js'
+import { useGeolocation } from './hooks/useGeolocation.js'
+import { routeLength, straightDistance, formatDistance, walkMinutes } from './map/geo.js'
 import {
   loadCalibration, saveCalibration, clearCalibration,
-  DEFAULT_CALIBRATION, campusCenter, uvToLatLng,
+  DEFAULT_CALIBRATION, latLngToUv,
 } from './map/calibration.js'
 
 const params = new URLSearchParams(window.location.search)
 const MODE = params.has('calibrate') ? 'calibrate' : params.has('editpoi') ? 'editpoi' : 'normal'
-const OUT_OF_CAMPUS_M = 1500
+const ARRIVED_M = 15
+
+// ?mock=16.7069,107.1954 — giả lập vị trí để thử/demo khi không ở tại chỗ
+const MOCK_POS = (() => {
+  const raw = params.get('mock')
+  if (!raw) return null
+  const [lat, lng] = raw.split(',').map(Number)
+  return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null
+})()
 
 export default function App() {
   const [cal, setCal] = useState(loadCalibration)
+  const [screen, setScreen] = useState(MODE === 'normal' ? 'home' : 'map')
+  const [destination, setDestination] = useState(null)
   const [layer, setLayer] = useState('tree')
   const [overlayOpacity, setOverlayOpacity] = useState(MODE === 'calibrate' ? 0.7 : 1)
   const [activeCats, setActiveCats] = useState(() => new Set(Object.keys(CATEGORIES)))
   const [selectedPoi, setSelectedPoi] = useState(null)
-  const [geoEnabled, setGeoEnabled] = useState(false)
   const [follow, setFollow] = useState(false)
 
-  const geo = useGeolocation(geoEnabled)
+  // Ứng dụng dẫn đường: cần vị trí ngay từ đầu để xếp thẻ theo khoảng cách
+  const geo = useGeolocation(MODE !== 'calibrate', MOCK_POS)
   const pos = geo.position
 
-  const visiblePois = useMemo(
-    () => (MODE === 'calibrate' ? [] : POIS.filter((p) => activeCats.has(p.cat))),
-    [activeCats]
-  )
+  // Vị trí người dùng trong hệ tọa độ ảnh
+  const userUV = useMemo(() => (pos ? latLngToUv(cal, { lat: pos.lat, lng: pos.lng }) : null), [pos, cal])
+  const insideCampus =
+    userUV && userUV.u > -0.03 && userUV.u < 1.03 && userUV.v > -0.03 && userUV.v < 1.03
 
-  const outOfCampus = useMemo(() => {
-    if (!pos) return false
-    const c = campusCenter(cal)
-    return distMeters(pos, { lat: c.lat, lng: c.lng }) > OUT_OF_CAMPUS_M
-  }, [pos, cal])
+  // Chỉ tính lại đường đi khi người dùng đổi ô lưới (~1.2m)
+  const userCellKey = userUV ? `${Math.round(userUV.u * MASK_W)},${Math.round(userUV.v * MASK_H)}` : null
+
+  const routeInfo = useMemo(() => {
+    if (!destination || !userUV || !insideCampus) return null
+    const r = findRoute({ u: userUV.u, v: userUV.v }, { u: destination.u, v: destination.v })
+    if (!r) return null
+    return { path: r.path, meters: routeLength(cal, r.path) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [destination, userCellKey, insideCampus, cal])
+
+  const arrived = routeInfo && routeInfo.meters < ARRIVED_M
+
+  const visiblePois = useMemo(() => {
+    if (MODE === 'calibrate') return []
+    if (destination) return [destination]
+    return POIS.filter((p) => activeCats.has(p.cat))
+  }, [activeCats, destination])
+
+  // Vào chế độ dẫn đường thì thôi bám theo vị trí, để zoom vừa khít đường đi
+  useEffect(() => {
+    if (destination) setFollow(false)
+  }, [destination])
+
+  const goHome = () => {
+    setDestination(null)
+    setSelectedPoi(null)
+    setScreen('home')
+  }
+  const pickDestination = (poi) => {
+    setSelectedPoi(null)
+    setDestination(poi)
+    setScreen('map')
+  }
+  const showOverview = () => {
+    setDestination(null)
+    setScreen('map')
+  }
 
   const toggleCat = (key) => {
     setActiveCats((prev) => {
@@ -43,14 +90,19 @@ export default function App() {
     })
   }
 
-  const onLocate = () => {
-    if (!geoEnabled) {
-      setGeoEnabled(true)
-      setFollow(true)
-    } else {
-      setFollow((f) => !f)
-    }
+  if (MODE === 'normal' && screen === 'home') {
+    return (
+      <HomeScreen
+        cal={cal}
+        position={pos}
+        geoStatus={geo.status}
+        onPick={pickDestination}
+        onOverview={showOverview}
+      />
+    )
   }
+
+  const guiding = MODE === 'normal' && !!destination
 
   return (
     <div className="app">
@@ -61,67 +113,70 @@ export default function App() {
         cal={cal}
         onCalChange={setCal}
         pois={visiblePois}
-        selectedPoiId={selectedPoi?.id ?? null}
+        selectedPoiId={selectedPoi?.id ?? destination?.id ?? null}
         onSelectPoi={setSelectedPoi}
         position={pos}
         follow={follow}
         onUserInteract={() => setFollow(false)}
+        route={routeInfo?.path ?? null}
+        fitKey={destination?.id ?? null}
       />
 
       {MODE === 'normal' && (
         <>
-          <header className="topbar">
-            <h1>Bản đồ La Vang</h1>
-            <div className="chips">
-              {Object.entries(CATEGORIES).map(([key, c]) => (
-                <button
-                  key={key}
-                  className={`chip${activeCats.has(key) ? ' chip-on' : ''}`}
-                  style={{ '--c': c.color }}
-                  onClick={() => toggleCat(key)}
-                >
-                  {c.label}
-                </button>
-              ))}
-            </div>
-          </header>
+          {guiding ? (
+            <GuideBar
+              destination={destination}
+              routeInfo={routeInfo}
+              arrived={arrived}
+              hasPosition={!!pos}
+              insideCampus={insideCampus}
+              onBack={goHome}
+            />
+          ) : (
+            <header className="topbar">
+              <div className="topbar-row">
+                <button className="icon-btn" onClick={goHome} title="Về danh sách địa điểm">‹</button>
+                <h1>Bản đồ tổng quan</h1>
+              </div>
+              <div className="chips">
+                {Object.entries(CATEGORIES).map(([key, c]) => (
+                  <button
+                    key={key}
+                    className={`chip${activeCats.has(key) ? ' chip-on' : ''}`}
+                    style={{ '--c': c.color }}
+                    onClick={() => toggleCat(key)}
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+            </header>
+          )}
 
           <div className="fabs">
             <button
-              className={`fab layer-fab`}
-              title="Đổi lớp bản đồ"
+              className={`fab${layer === 'notree' ? ' fab-on' : ''}`}
+              title={layer === 'tree' ? 'Ẩn cây để xem rõ lối đi' : 'Hiện cây'}
               onClick={() => setLayer((l) => (l === 'tree' ? 'notree' : 'tree'))}
             >
-              {layer === 'tree' ? '🌳' : '🗺️'}
+              {layer === 'tree' ? '🌳' : '🚫'}
             </button>
+            {guiding && (
+              <button className="fab" title="Xem toàn bộ bản đồ" onClick={showOverview}>🗺️</button>
+            )}
             <button
               className={`fab locate-fab${follow ? ' fab-on' : ''}`}
               title="Vị trí của tôi"
-              onClick={onLocate}
+              onClick={() => setFollow((f) => !f)}
             >
               ➤
             </button>
           </div>
 
-          {geo.status === 'denied' && (
-            <div className="banner banner-warn">
-              Bạn đã từ chối quyền vị trí. Hãy bật lại quyền Vị trí cho trang này trong cài đặt trình duyệt.
-            </div>
-          )}
-          {geo.status === 'unavailable' && (
-            <div className="banner banner-warn">Thiết bị không lấy được vị trí GPS.</div>
-          )}
-          {geo.status === 'watching' && !pos && (
-            <div className="banner">Đang dò tín hiệu GPS…</div>
-          )}
-          {pos?.stale && (
-            <div className="banner">Tín hiệu GPS yếu (±{Math.round(pos.accuracy)}m) — vị trí có thể lệch.</div>
-          )}
-          {outOfCampus && (
-            <div className="banner">Bạn đang ở ngoài khu vực Trung tâm hành hương La Vang.</div>
-          )}
+          <Banners geo={geo} pos={pos} insideCampus={insideCampus} guiding={guiding} routeInfo={routeInfo} />
 
-          {selectedPoi && (
+          {!guiding && selectedPoi && (
             <div className="sheet">
               <div className="sheet-head">
                 <span className="sheet-icon" style={{ '--c': CATEGORIES[selectedPoi.cat].color }}>
@@ -133,7 +188,14 @@ export default function App() {
                 </div>
                 <button className="sheet-close" onClick={() => setSelectedPoi(null)}>✕</button>
               </div>
-              {pos && <SheetDistance cal={cal} poi={selectedPoi} pos={pos} />}
+              {pos && (
+                <div className="sheet-dist">
+                  📍 Cách bạn khoảng {formatDistance(straightDistance(cal, selectedPoi, pos))}
+                </div>
+              )}
+              <button className="btn-route" onClick={() => pickDestination(selectedPoi)}>
+                ➤ Chỉ đường tới đây
+              </button>
             </div>
           )}
         </>
@@ -158,11 +220,51 @@ export default function App() {
   )
 }
 
-function SheetDistance({ cal, poi, pos }) {
-  const ll = uvToLatLng(cal, poi.u, poi.v)
-  const d = distMeters(pos, { lat: ll.lat, lng: ll.lng })
-  const txt = d >= 1000 ? `${(d / 1000).toFixed(1)} km` : `${Math.round(d)} m`
-  return <div className="sheet-dist">📍 Cách bạn khoảng {txt}</div>
+function GuideBar({ destination, routeInfo, arrived, hasPosition, insideCampus, onBack }) {
+  return (
+    <header className="guidebar">
+      <button className="icon-btn" onClick={onBack} title="Về danh sách địa điểm">‹</button>
+      <span className="guide-icon">{destination.icon}</span>
+      <div className="guide-text">
+        <div className="guide-name">{destination.name}</div>
+        <div className="guide-sub">
+          {arrived ? (
+            <b>Bạn đã tới nơi</b>
+          ) : routeInfo ? (
+            <>
+              <b>{formatDistance(routeInfo.meters)}</b> · khoảng {walkMinutes(routeInfo.meters)} phút đi bộ
+            </>
+          ) : !hasPosition ? (
+            'Đang chờ vị trí GPS…'
+          ) : !insideCampus ? (
+            'Bạn đang ở ngoài khuôn viên'
+          ) : (
+            'Chưa tìm được lối đi'
+          )}
+        </div>
+      </div>
+    </header>
+  )
+}
+
+function Banners({ geo, pos, insideCampus, guiding, routeInfo }) {
+  const items = []
+  if (geo.status === 'denied')
+    items.push(['warn', 'Bạn đã từ chối quyền vị trí. Hãy bật lại quyền Vị trí cho trang này trong cài đặt trình duyệt.'])
+  else if (geo.status === 'unavailable') items.push(['warn', 'Thiết bị không lấy được vị trí GPS.'])
+  else if (!pos) items.push(['', 'Đang dò tín hiệu GPS…'])
+  else if (pos.stale) items.push(['', `Tín hiệu GPS yếu (±${Math.round(pos.accuracy)}m) — vị trí có thể lệch.`])
+
+  if (pos && !insideCampus)
+    items.push(['', 'Bạn đang ở ngoài Trung tâm hành hương La Vang.'])
+  else if (guiding && pos && insideCampus && !routeInfo)
+    items.push(['warn', 'Không tìm được lối đi bộ tới điểm này.'])
+
+  return items.map(([kind, text], i) => (
+    <div key={i} className={`banner${kind ? ` banner-${kind}` : ''}`} style={{ '--i': i }}>
+      {text}
+    </div>
+  ))
 }
 
 function CalibratePanel({ cal, layer, setLayer, opacity, setOpacity, onSave, onClear }) {

@@ -17,12 +17,20 @@ export function distMeters(a, b) {
 // Theo dõi GPS: enableHighAccuracy + lọc sai số + deadzone + làm mượt EMA.
 // state.status: 'idle' | 'watching' | 'denied' | 'unavailable'
 // state.position: { lat, lng, accuracy, heading, stale }
-export function useGeolocation(enabled) {
+export function useGeolocation(enabled, mock) {
   const [state, setState] = useState({ status: 'idle', position: null })
   const lastRef = useRef(null)
 
   useEffect(() => {
     if (!enabled) return
+    // Chế độ giả lập vị trí (?mock=lat,lng) để thử/demo khi không ở tại chỗ
+    if (mock) {
+      setState({
+        status: 'watching',
+        position: { lat: mock.lat, lng: mock.lng, accuracy: 8, heading: null, stale: false },
+      })
+      return
+    }
     if (!('geolocation' in navigator)) {
       setState({ status: 'unavailable', position: null })
       return
@@ -71,7 +79,7 @@ export function useGeolocation(enabled) {
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     )
     return () => navigator.geolocation.clearWatch(id)
-  }, [enabled])
+  }, [enabled, mock])
 
   return state
 }

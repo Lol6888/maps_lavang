@@ -26,6 +26,8 @@ export default function MapView({
   position, // { lat, lng, accuracy, heading, stale } | null
   follow,
   onUserInteract,
+  route, // [{u, v}] | null — đường đi bộ tới đích
+  fitKey, // đổi giá trị này để zoom vừa khít đường đi
 }) {
   // Chế độ thường vẽ trong khung "campus-up"; calibrate vẽ trong khung thật
   const displayCal = useMemo(() => displayCalFrom(cal), [cal])
@@ -39,6 +41,7 @@ export default function MapView({
   const userMarkerRef = useRef(null)
   const accCircleRef = useRef(null)
   const cornerMarkersRef = useRef(null)
+  const routeLayerRef = useRef(null)
   const handlersRef = useRef({})
 
   // callbacks/props mới nhất cho các listener gắn 1 lần
@@ -162,6 +165,35 @@ export default function MapView({
     if (poi) map.panTo(uvToLatLng(frame, poi.u, poi.v))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPoiId])
+
+  // ---- Đường đi ----
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+    if (routeLayerRef.current) {
+      map.removeLayer(routeLayerRef.current)
+      routeLayerRef.current = null
+    }
+    if (!route || route.length < 2) return
+    const latlngs = route.map((p) => uvToLatLng(frame, p.u, p.v))
+    const style = { lineCap: 'round', lineJoin: 'round', interactive: false }
+    routeLayerRef.current = L.layerGroup([
+      L.polyline(latlngs, { ...style, color: '#fff', weight: 10, opacity: 0.95 }),
+      L.polyline(latlngs, { ...style, color: '#1a73e8', weight: 5 }),
+      L.circleMarker(latlngs[latlngs.length - 1], {
+        radius: 7, color: '#fff', weight: 3, fillColor: '#d93025', fillOpacity: 1, interactive: false,
+      }),
+    ]).addTo(map)
+  }, [route, frame])
+
+  // Zoom vừa khít đường đi khi đổi đích
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !fitKey || !route || route.length < 2) return
+    const b = L.latLngBounds(route.map((p) => uvToLatLng(frame, p.u, p.v)))
+    map.fitBounds(b, { padding: [70, 90], maxZoom: 19 })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fitKey])
 
   // ---- Vị trí người dùng ----
   useEffect(() => {
