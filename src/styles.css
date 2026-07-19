@@ -268,27 +268,38 @@ button { font-family: inherit; }
 
 /* ============ Căn chỉnh (chế độ debug) ============ */
 .cal-handle {
-  width: 28px; height: 28px; border-radius: 6px;
+  width: 32px; height: 32px; border-radius: 8px;
   background: var(--g-red); color: #fff; font-size: 11px; font-weight: 500;
   display: flex; align-items: center; justify-content: center;
   border: 2px solid #fff; box-shadow: var(--el-2);
 }
-.cal-center { background: var(--g-blue); border-radius: 50%; font-size: 15px; }
+.cal-center { background: var(--g-blue); border-radius: 50%; }
 .cal-panel {
   position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 700;
-  background: rgba(255,255,255,.97); border-radius: 12px; padding: 14px;
-  font-size: 13px; max-height: 45vh; overflow-y: auto; box-shadow: var(--el-3);
+  background: var(--g-surface); border-radius: 12px;
+  font-size: 13px; box-shadow: var(--el-3); overflow: hidden;
 }
-.cal-title { font-weight: 500; font-size: 15px; margin-bottom: 4px; }
-.cal-help { color: var(--g-text-2); margin-bottom: 10px; }
-.cal-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
-.cal-row input[type="range"] { flex: 1; }
+.cal-head {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 12px 14px; border: none; background: none; cursor: pointer;
+  font-size: 14px; font-weight: 500; color: var(--g-text);
+}
+.cal-head span { flex: 1; text-align: left; }
+.cal-head svg { color: var(--g-text-2); }
+.cal-body { padding: 0 14px 14px; max-height: 46vh; overflow-y: auto; }
+.cal-help { margin: 0 0 12px; color: var(--g-text-2); line-height: 1.5; }
+.cal-inline-icon { vertical-align: -3px; color: var(--g-blue); }
+.cal-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.cal-label { color: var(--g-text-2); }
+.cal-value { color: var(--g-text-2); min-width: 36px; text-align: right; }
+.cal-row input[type="range"] { flex: 1; min-width: 90px; accent-color: var(--g-blue); }
 .cal-json {
-  background: var(--g-bg); border-radius: 8px; padding: 10px;
-  font-size: 11px; overflow-x: auto; margin: 0; font-family: 'Roboto Mono', monospace;
+  background: var(--g-bg); border-radius: 8px; padding: 10px; max-height: 140px;
+  font-size: 11px; overflow: auto; margin: 0; font-family: ui-monospace, monospace;
 }
 .btn {
+  display: inline-flex; align-items: center; gap: 6px;
   border: 1px solid var(--g-border); background: var(--g-surface); border-radius: 18px;
-  padding: 8px 16px; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--g-text);
+  padding: 8px 14px; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--g-text);
 }
 .btn-primary { background: var(--g-blue); border-color: var(--g-blue); color: #fff; }

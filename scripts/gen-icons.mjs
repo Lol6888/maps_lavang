@@ -9,6 +9,9 @@ const ICONS = [
   // giao diện
   'search', 'arrow_back', 'close', 'my_location', 'navigation', 'directions_walk',
   'layers', 'park', 'map', 'place', 'more_vert', 'info',
+  // chế độ căn chỉnh
+  'expand_more', 'expand_less', 'content_copy', 'save', 'restart_alt',
+  'open_with', 'center_focus_strong', 'tune',
   // địa điểm
   'church', 'water_drop', 'castle', 'account_balance', 'wc', 'battery_charging_full',
   'medical_services', 'restaurant', 'hotel', 'celebration', 'cottage', 'shield',

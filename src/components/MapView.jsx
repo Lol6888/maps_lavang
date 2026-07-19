@@ -270,7 +270,7 @@ export default function MapView({
     const tl = mk(c0.topleft, 'cal-corner', 'TL')
     const tr = mk(c0.topright, 'cal-corner', 'TR')
     const bl = mk(c0.bottomleft, 'cal-corner', 'BL')
-    const center = mk(campusCenter(c0), 'cal-center', '✥')
+    const center = mk(campusCenter(c0), 'cal-center', iconSvg('OpenWith', { size: 18, color: '#fff' }))
 
     const emit = (next) => handlersRef.current.onCalChange?.(next)
     const ll = (m) => { const p = m.getLatLng(); return [p.lat, p.lng] }

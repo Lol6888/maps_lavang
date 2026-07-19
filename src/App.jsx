@@ -302,31 +302,61 @@ function Banners({ geo, pos, insideCampus, guiding, routeInfo }) {
 }
 
 function CalibratePanel({ cal, layer, setLayer, opacity, setOpacity, onSave, onClear }) {
+  // Thu gọn được: khi mở, panel che mất tay nắm TL/TR nằm ở nửa dưới màn hình.
+  const [open, setOpen] = useState(false)
+  const [showJson, setShowJson] = useState(false)
   const json = JSON.stringify(cal, null, 2)
+
   return (
     <div className="cal-panel">
-      <div className="cal-title">Căn chỉnh bản đồ</div>
-      <div className="cal-help">
-        Kéo <b>TL / TR / BL</b> để khớp ảnh với vệ tinh. Kéo <b>✥</b> để dời toàn bộ.
-      </div>
-      <label className="cal-row">
-        Độ mờ ảnh: {Math.round(opacity * 100)}%
-        <input type="range" min="0.2" max="1" step="0.05" value={opacity}
-          onChange={(e) => setOpacity(Number(e.target.value))} />
-      </label>
-      <div className="cal-row cal-layers">
-        {['tree', 'notree', 'none'].map((l) => (
-          <button key={l} className={`chip${layer === l ? ' chip-on' : ''}`} onClick={() => setLayer(l)}>
-            {l === 'tree' ? 'Có cây' : l === 'notree' ? 'Không cây' : 'Ẩn ảnh'}
-          </button>
-        ))}
-      </div>
-      <div className="cal-row cal-actions">
-        <button className="btn" onClick={() => navigator.clipboard?.writeText(json)}>Copy JSON</button>
-        <button className="btn btn-primary" onClick={onSave}>Lưu vào máy</button>
-        <button className="btn" onClick={onClear}>Xóa / mặc định</button>
-      </div>
-      <pre className="cal-json">{json}</pre>
+      <button className="cal-head" onClick={() => setOpen((o) => !o)}>
+        <Icon name="Tune" size={20} />
+        <span>Căn chỉnh bản đồ</span>
+        <Icon name={open ? 'ExpandMore' : 'ExpandLess'} size={22} />
+      </button>
+
+      {open && (
+        <div className="cal-body">
+          <p className="cal-help">
+            Kéo <b>TL / TR / BL</b> để khớp ảnh với vệ tinh, kéo{' '}
+            <Icon name="OpenWith" size={15} className="cal-inline-icon" /> để dời cả ảnh.
+            Ảnh xoay ~194° so với hướng Bắc nên các nhãn góc nằm lệch trên màn hình:{' '}
+            <b>BL</b> ở phía bắc, <b>TL/TR</b> ở phía nam.
+          </p>
+
+          <label className="cal-row">
+            <span className="cal-label">Độ mờ ảnh</span>
+            <input type="range" min="0.2" max="1" step="0.05" value={opacity}
+              onChange={(e) => setOpacity(Number(e.target.value))} />
+            <span className="cal-value">{Math.round(opacity * 100)}%</span>
+          </label>
+
+          <div className="cal-row">
+            {['tree', 'notree', 'none'].map((l) => (
+              <button key={l} className={`chip${layer === l ? ' chip-on' : ''}`} onClick={() => setLayer(l)}>
+                {l === 'tree' ? 'Có cây' : l === 'notree' ? 'Không cây' : 'Ẩn ảnh'}
+              </button>
+            ))}
+          </div>
+
+          <div className="cal-row">
+            <button className="btn" onClick={() => navigator.clipboard?.writeText(json)}>
+              <Icon name="ContentCopy" size={16} /> Copy
+            </button>
+            <button className="btn btn-primary" onClick={onSave}>
+              <Icon name="Save" size={16} /> Lưu
+            </button>
+            <button className="btn" onClick={onClear}>
+              <Icon name="RestartAlt" size={16} /> Mặc định
+            </button>
+            <button className="btn" onClick={() => setShowJson((s) => !s)}>
+              JSON
+            </button>
+          </div>
+
+          {showJson && <pre className="cal-json">{json}</pre>}
+        </div>
+      )}
     </div>
   )
 }
