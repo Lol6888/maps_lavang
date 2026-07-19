@@ -16,6 +16,21 @@ npm run dev
 3. **Bản đồ tổng quan** — nút "Xem toàn bộ bản đồ" (hoặc 🗺️ khi đang dẫn đường) để xem tự do mọi điểm, lọc theo danh mục, chạm marker → "Chỉ đường tới đây".
 4. **Bật/tắt lớp cây** — nút 🌳/🚫 ở mọi chế độ bản đồ, tắt cây để nhìn rõ lối đi.
 
+## Giao diện
+
+Theo ngôn ngữ thiết kế Material / Google Maps: ô tìm kiếm dạng pill có bóng, chip lọc,
+bottom sheet có tay kéo, nút tonal/filled bo tròn, thang độ nổi (elevation) và bảng màu Google
+(`#1a73e8`, `#ea4335`, `#188038`, `#5f6368`, `#dadce0`). Tuyến đường vẽ màu `#4285f4` viền `#185abc`
+như Google Maps.
+
+- **Font: Roboto**, self-host qua `@fontsource/roboto` — chỉ nạp subset `latin` + `vietnamese`
+  ở 3 độ đậm (400/500/700). Không dùng Google Sans vì đó là font độc quyền của Google,
+  không cấp phép cho bên thứ ba.
+- **Icon: Material Design Icons** (Apache 2.0). `scripts/gen-icons.mjs` trích path SVG của
+  đúng 28 icon cần dùng vào `src/components/iconPaths.js` (~5KB) thay vì tải cả font icon (~300KB).
+  Thêm icon: sửa mảng `ICONS` trong script rồi chạy `npm i -D @material-design-icons/svg && node scripts/gen-icons.mjs`.
+- **Không gọi CDN**: font và icon nằm trong bundle, chạy được khi mạng nghẽn hoặc offline.
+
 ## Kiến trúc
 
 - **React + Vite + Leaflet** (không dùng react-leaflet).

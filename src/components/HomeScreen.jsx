@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import { CATEGORIES, POIS } from '../data/pois.js'
 import { straightDistance, formatDistance } from '../map/geo.js'
+import Icon from './Icon.jsx'
 
-// Màn hình đầu: chọn địa điểm muốn tới (card), hoặc mở bản đồ tổng quan.
+// Màn hình đầu: chọn địa điểm muốn tới, hoặc mở bản đồ tổng quan.
 export default function HomeScreen({ cal, position, onPick, onOverview, geoStatus }) {
   const [query, setQuery] = useState('')
 
@@ -26,44 +27,94 @@ export default function HomeScreen({ cal, position, onPick, onOverview, geoStatu
 
   return (
     <div className="home">
-      <div className="home-hero">
-        <h1>Trung tâm hành hương<br />Đức Mẹ La Vang</h1>
-        <p>Chọn địa điểm bạn muốn đến, bản đồ sẽ chỉ đường từ chỗ bạn đang đứng.</p>
-        <input
-          className="home-search"
-          type="search"
-          placeholder="Tìm địa điểm…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <button className="btn-overview" onClick={onOverview}>
-          🗺️ Xem toàn bộ bản đồ
+      <div className="home-top">
+        <div className="home-title">
+          Trung tâm hành hương Đức Mẹ La Vang
+          <span>Chọn địa điểm để được chỉ đường</span>
+        </div>
+
+        <div className="searchbar">
+          <Icon name="Search" size={22} />
+          <input
+            type="search"
+            placeholder="Tìm địa điểm"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          {query && (
+            <button className="icon-only" onClick={() => setQuery('')} aria-label="Xóa">
+              <Icon name="Close" size={20} />
+            </button>
+          )}
+        </div>
+
+        <button className="btn-tonal" onClick={onOverview}>
+          <Icon name="Map" size={20} />
+          Xem toàn bộ bản đồ
         </button>
-        {position ? (
-          <div className="home-gps ok">Đã có vị trí của bạn — các địa điểm xếp theo khoảng cách gần nhất</div>
-        ) : geoStatus === 'denied' ? (
-          <div className="home-gps warn">Chưa có quyền vị trí. Bật quyền Vị trí để được chỉ đường.</div>
-        ) : (
-          <div className="home-gps">Đang lấy vị trí GPS của bạn…</div>
-        )}
+
+        <GpsNote position={position} geoStatus={geoStatus} />
       </div>
 
-      {groups.length === 0 && <div className="home-empty">Không tìm thấy địa điểm nào.</div>}
+      {groups.length === 0 && <div className="home-empty">Không tìm thấy địa điểm nào</div>}
 
       {groups.map((g) => (
         <section key={g.key} className="home-group">
-          <h2 style={{ '--c': g.meta.color }}>{g.meta.label}</h2>
-          <div className="card-grid">
-            {g.items.map((p) => (
-              <button key={p.id} className="card" style={{ '--c': g.meta.color }} onClick={() => onPick(p)}>
-                <span className="card-icon">{p.icon}</span>
-                <span className="card-name">{p.name}</span>
-                {p.dist != null && <span className="card-dist">{formatDistance(p.dist)}</span>}
-              </button>
-            ))}
-          </div>
+          <h2>{g.meta.label}</h2>
+          {g.items.map((p) => (
+            <button
+              key={p.id}
+              className="place-row"
+              onClick={() => onPick(p)}
+              style={{ '--c': g.meta.color, '--c-bg': `${g.meta.color}1f` }}
+            >
+              <span className="place-avatar">
+                <Icon name={p.icon} size={22} />
+              </span>
+              <span className="place-body">
+                <span className="place-name">{p.name}</span>
+                <span className="place-meta">
+                  {p.dist != null ? (
+                    <>
+                      <b>{formatDistance(p.dist)}</b> · {g.meta.label}
+                    </>
+                  ) : (
+                    g.meta.label
+                  )}
+                </span>
+              </span>
+              <span className="place-go">
+                <Icon name="DirectionsWalk" size={20} />
+              </span>
+            </button>
+          ))}
         </section>
       ))}
+    </div>
+  )
+}
+
+function GpsNote({ position, geoStatus }) {
+  if (position) {
+    return (
+      <div className="gps-note">
+        <span className="gps-dot" />
+        Đã có vị trí của bạn — địa điểm xếp theo khoảng cách gần nhất
+      </div>
+    )
+  }
+  if (geoStatus === 'denied') {
+    return (
+      <div className="gps-note warn">
+        <span className="gps-dot" />
+        Chưa có quyền vị trí. Bật quyền Vị trí để được chỉ đường.
+      </div>
+    )
+  }
+  return (
+    <div className="gps-note">
+      <span className="gps-dot" />
+      Đang lấy vị trí GPS của bạn…
     </div>
   )
 }

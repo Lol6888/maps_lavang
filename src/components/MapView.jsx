@@ -6,6 +6,7 @@ import {
   displayCalFrom, campusBearing, realToDisplay,
 } from '../map/calibration.js'
 import { CATEGORIES } from '../data/pois.js'
+import { iconSvg } from './Icon.jsx'
 
 const MAP_URLS = {
   tree: '/map/base-tree-4096.webp',
@@ -143,13 +144,15 @@ export default function MapView({
     if (!group) return
     group.clearLayers()
     for (const poi of pois) {
-      const color = CATEGORIES[poi.cat]?.color || '#555'
+      const color = CATEGORIES[poi.cat]?.color || '#5f6368'
       const selected = poi.id === selectedPoiId
       const icon = L.divIcon({
         className: '',
-        html: `<div class="poi-marker${selected ? ' poi-selected' : ''}" style="--c:${color}"><span>${poi.icon}</span></div>`,
-        iconSize: [30, 30],
-        iconAnchor: [15, 15],
+        html: `<div class="poi-marker${selected ? ' poi-selected' : ''}" style="--c:${color}">${
+          iconSvg(poi.icon, { size: selected ? 22 : 16, color: '#fff' })
+        }</div>`,
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
       })
       const m = L.marker(uvToLatLng(frame, poi.u, poi.v), { icon, title: poi.name })
       m.on('click', () => handlersRef.current.onSelectPoi?.(poi))
@@ -178,10 +181,10 @@ export default function MapView({
     const latlngs = route.map((p) => uvToLatLng(frame, p.u, p.v))
     const style = { lineCap: 'round', lineJoin: 'round', interactive: false }
     routeLayerRef.current = L.layerGroup([
-      L.polyline(latlngs, { ...style, color: '#fff', weight: 10, opacity: 0.95 }),
-      L.polyline(latlngs, { ...style, color: '#1a73e8', weight: 5 }),
+      L.polyline(latlngs, { ...style, color: '#185abc', weight: 11, opacity: 0.9 }),
+      L.polyline(latlngs, { ...style, color: '#4285f4', weight: 7 }),
       L.circleMarker(latlngs[latlngs.length - 1], {
-        radius: 7, color: '#fff', weight: 3, fillColor: '#d93025', fillOpacity: 1, interactive: false,
+        radius: 7, color: '#fff', weight: 3, fillColor: '#ea4335', fillOpacity: 1, interactive: false,
       }),
     ]).addTo(map)
   }, [route, frame])
@@ -226,8 +229,8 @@ export default function MapView({
     if (!accCircleRef.current) {
       accCircleRef.current = L.circle(ll, {
         radius: position.accuracy,
-        color: '#1a73e8', weight: 1, opacity: 0.4,
-        fillColor: '#1a73e8', fillOpacity: 0.12, interactive: false,
+        color: '#4285f4', weight: 1, opacity: 0.35,
+        fillColor: '#4285f4', fillOpacity: 0.12, interactive: false,
       }).addTo(map)
     } else {
       accCircleRef.current.setLatLng(ll)

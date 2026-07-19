@@ -1,203 +1,294 @@
+/* Ngôn ngữ thiết kế Material / Google Maps: Roboto, bảng màu Google,
+   độ nổi (elevation) theo tài liệu Material. */
+:root {
+  --g-blue: #1a73e8;
+  --g-blue-dark: #1967d2;
+  --g-red: #ea4335;
+  --g-green: #188038;
+  --g-text: #202124;
+  --g-text-2: #5f6368;
+  --g-border: #dadce0;
+  --g-surface: #fff;
+  --g-bg: #f1f3f4;
+  --g-hover: #f8f9fa;
+
+  --el-1: 0 1px 2px rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
+  --el-2: 0 1px 2px rgba(60,64,67,.3), 0 2px 6px 2px rgba(60,64,67,.15);
+  --el-3: 0 1px 3px rgba(60,64,67,.3), 0 4px 8px 3px rgba(60,64,67,.15);
+}
+
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
 body {
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: var(--g-text);
+  background: var(--g-bg);
   overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
 }
+button { font-family: inherit; }
 
 .app { position: relative; height: 100%; }
-.map-root { position: absolute; inset: 0; background: #b9bdb6; z-index: 0; }
+.map-root { position: absolute; inset: 0; background: #e8eaed; z-index: 0; }
 
-/* ---- Màn hình chọn địa điểm ---- */
+/* ============ Màn hình chọn địa điểm ============ */
 .home {
-  height: 100%; overflow-y: auto; background: #f7f6f3;
-  padding: 0 0 calc(24px + env(safe-area-inset-bottom));
+  height: 100%; overflow-y: auto; background: var(--g-surface);
+  padding-bottom: calc(24px + env(safe-area-inset-bottom));
 }
-.home-hero {
-  background: linear-gradient(160deg, #1a6b3c, #14532d);
-  color: #fff; padding: calc(22px + env(safe-area-inset-top)) 18px 20px;
-  border-radius: 0 0 20px 20px;
+.home-top {
+  position: sticky; top: 0; z-index: 5; background: var(--g-surface);
+  padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
 }
-.home-hero h1 { margin: 0 0 6px; font-size: 22px; line-height: 1.25; font-weight: 700; }
-.home-hero p { margin: 0 0 14px; font-size: 13.5px; opacity: .85; line-height: 1.45; }
-.home-search {
-  width: 100%; border: none; border-radius: 10px; padding: 11px 14px;
-  font-size: 15px; margin-bottom: 10px; background: #fff; color: #222;
-}
-.btn-overview {
-  width: 100%; border: 1.5px solid rgba(255,255,255,.5); background: rgba(255,255,255,.12);
-  color: #fff; border-radius: 10px; padding: 11px; font-size: 15px; font-weight: 600; cursor: pointer;
-}
-.home-gps { margin-top: 12px; font-size: 12.5px; opacity: .8; }
-.home-gps.ok { opacity: .95; }
-.home-gps.warn { color: #ffd7d3; opacity: 1; }
-.home-empty { padding: 30px 18px; color: #666; text-align: center; }
-.home-group { padding: 18px 14px 0; }
-.home-group h2 {
-  margin: 0 0 10px; font-size: 15px; font-weight: 700; color: var(--c);
-  display: flex; align-items: center; gap: 7px;
-}
-.home-group h2::before {
-  content: ''; width: 4px; height: 15px; border-radius: 2px; background: var(--c);
-}
-.card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
-.card {
-  display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
-  background: #fff; border: none; border-left: 3px solid var(--c); border-radius: 10px;
-  padding: 12px 12px 11px; text-align: left; cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0,0,0,.09);
-}
-.card:active { transform: scale(.985); }
-.card-icon { font-size: 21px; }
-.card-name { font-size: 13.5px; font-weight: 600; color: #222; line-height: 1.3; }
-.card-dist { font-size: 12px; color: var(--c); font-weight: 700; }
+.home-title { font-size: 16px; font-weight: 500; letter-spacing: .1px; }
+.home-title span { display: block; font-size: 12px; color: var(--g-text-2); font-weight: 400; margin-top: 1px; }
 
-/* ---- Top bar ---- */
-.topbar {
+/* Ô tìm kiếm kiểu Google Maps: pill trắng, bo 24px, có bóng */
+.searchbar {
+  display: flex; align-items: center; gap: 12px;
+  height: 48px; margin-top: 12px; padding: 0 16px;
+  background: var(--g-surface); border-radius: 24px; box-shadow: var(--el-2);
+}
+.searchbar svg { color: var(--g-text-2); flex: 0 0 auto; }
+.searchbar input {
+  flex: 1; min-width: 0; border: none; outline: none; background: none;
+  font-size: 16px; color: var(--g-text);
+}
+.searchbar input::placeholder { color: var(--g-text-2); }
+.searchbar .icon-only {
+  border: none; background: none; padding: 4px; cursor: pointer;
+  color: var(--g-text-2); display: flex;
+}
+
+/* Nút tonal kiểu Material */
+.btn-tonal {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; margin-top: 12px; height: 44px;
+  border: none; border-radius: 22px; cursor: pointer;
+  background: #e8f0fe; color: var(--g-blue);
+  font-size: 14px; font-weight: 500; letter-spacing: .15px;
+}
+.btn-tonal:active { background: #d2e3fc; }
+
+.gps-note {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 12px; font-size: 12px; color: var(--g-text-2);
+}
+.gps-note.warn { color: var(--g-red); }
+.gps-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--g-blue); flex: 0 0 auto;
+}
+.gps-note.warn .gps-dot { background: var(--g-red); }
+
+.home-empty { padding: 40px 16px; color: var(--g-text-2); text-align: center; font-size: 14px; }
+.home-group { padding-top: 8px; }
+.home-group h2 {
+  margin: 0; padding: 14px 16px 6px;
+  font-size: 14px; font-weight: 500; color: var(--g-text-2); letter-spacing: .1px;
+}
+
+/* Hàng địa điểm kiểu danh sách Google Maps */
+.place-row {
+  display: flex; align-items: center; gap: 16px; width: 100%;
+  padding: 12px 16px; border: none; background: none; cursor: pointer; text-align: left;
+  border-bottom: 1px solid var(--g-border);
+}
+.place-row:active { background: var(--g-hover); }
+.place-avatar {
+  width: 40px; height: 40px; border-radius: 50%; flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--c-bg); color: var(--c);
+}
+.place-body { flex: 1; min-width: 0; display: block; }
+.place-name {
+  display: block; font-size: 15px; font-weight: 400; color: var(--g-text); line-height: 1.35;
+}
+.place-meta { display: block; font-size: 13px; color: var(--g-text-2); margin-top: 2px; }
+.place-meta b { color: var(--g-text-2); font-weight: 500; }
+.place-go {
+  width: 40px; height: 40px; border-radius: 50%; flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--g-border); background: var(--g-surface); color: var(--g-blue);
+}
+
+/* ============ Thanh trên bản đồ ============ */
+.map-top {
   position: absolute; top: 0; left: 0; right: 0; z-index: 500;
-  padding: calc(8px + env(safe-area-inset-top)) 12px 8px;
-  background: linear-gradient(rgba(255,255,255,.95), rgba(255,255,255,.75) 70%, transparent);
+  padding: calc(10px + env(safe-area-inset-top)) 12px 0;
   pointer-events: none;
 }
-.topbar-row { display: flex; align-items: center; gap: 4px; margin-bottom: 6px; pointer-events: auto; }
-.topbar h1 {
-  margin: 0; font-size: 17px; font-weight: 700; color: #1a4d2e;
+.map-top > * { pointer-events: auto; }
+.top-pill {
+  display: flex; align-items: center; gap: 12px;
+  height: 48px; padding: 0 8px 0 4px;
+  background: var(--g-surface); border-radius: 24px; box-shadow: var(--el-2);
 }
-.icon-btn {
-  border: none; background: #fff; border-radius: 50%; width: 34px; height: 34px;
-  font-size: 22px; line-height: 1; color: #1a4d2e; cursor: pointer; flex: 0 0 auto;
-  box-shadow: 0 1px 4px rgba(0,0,0,.2);
-}
-
-/* ---- Thanh dẫn đường ---- */
-.guidebar {
-  position: absolute; top: 0; left: 0; right: 0; z-index: 600;
-  display: flex; align-items: center; gap: 10px;
-  padding: calc(10px + env(safe-area-inset-top)) 14px 12px;
-  background: #1a6b3c; color: #fff;
-  box-shadow: 0 2px 10px rgba(0,0,0,.25);
-}
-.guidebar .icon-btn { background: rgba(255,255,255,.18); color: #fff; box-shadow: none; }
-.guide-icon {
-  width: 38px; height: 38px; flex: 0 0 auto; border-radius: 50%;
-  background: rgba(255,255,255,.16); display: flex; align-items: center;
-  justify-content: center; font-size: 19px;
-}
-.guide-text { min-width: 0; }
-.guide-name {
-  font-size: 15.5px; font-weight: 700; line-height: 1.25;
+.top-pill .pill-text { flex: 1; min-width: 0; }
+.top-pill .pill-title {
+  font-size: 15px; font-weight: 500; color: var(--g-text);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.guide-sub { font-size: 13px; opacity: .9; margin-top: 1px; }
-.chips { display: flex; gap: 6px; overflow-x: auto; pointer-events: auto; padding-bottom: 4px; scrollbar-width: none; }
+.top-pill .pill-sub { font-size: 12px; color: var(--g-text-2); margin-top: 1px; }
+
+.icon-btn {
+  width: 40px; height: 40px; border-radius: 50%; flex: 0 0 auto;
+  border: none; background: none; color: var(--g-text-2);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.icon-btn:active { background: var(--g-bg); }
+
+/* Chip lọc kiểu Google Maps */
+.chips {
+  display: flex; gap: 8px; margin-top: 10px; padding-bottom: 4px;
+  overflow-x: auto; scrollbar-width: none;
+}
 .chips::-webkit-scrollbar { display: none; }
 .chip {
-  flex: 0 0 auto; border: 1.5px solid var(--c, #888); border-radius: 999px;
-  background: #fff; color: var(--c, #444);
-  font-size: 13px; font-weight: 600; padding: 5px 12px; cursor: pointer;
+  display: flex; align-items: center; gap: 6px; flex: 0 0 auto;
+  height: 34px; padding: 0 14px; cursor: pointer;
+  border: 1px solid var(--g-border); border-radius: 17px;
+  background: var(--g-surface); color: var(--g-text);
+  font-size: 13px; font-weight: 500; letter-spacing: .1px;
+  box-shadow: var(--el-1);
 }
-.chip-on { background: var(--c, #444); color: #fff; }
+.chip svg { color: var(--c, var(--g-text-2)); }
+.chip-on {
+  background: #e8f0fe; border-color: #d2e3fc; color: var(--g-blue-dark);
+}
+.chip-on svg { color: var(--g-blue-dark); }
 
-/* ---- FABs ---- */
+/* ============ FAB ============ */
 .fabs {
-  position: absolute; right: 12px; bottom: calc(24px + env(safe-area-inset-bottom));
-  z-index: 500; display: flex; flex-direction: column; gap: 10px;
+  position: absolute; right: 12px; z-index: 500;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; gap: 12px;
 }
+.app.has-sheet .fabs { bottom: calc(200px + env(safe-area-inset-bottom)); }
+.app.guiding .fabs { bottom: calc(140px + env(safe-area-inset-bottom)); }
 .fab {
-  width: 48px; height: 48px; border-radius: 50%; border: none;
-  background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.25);
-  font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-}
-.locate-fab { color: #1a73e8; }
-.fab-on { background: #1a73e8; color: #fff; }
-
-/* ---- Banners ---- */
-.banner {
-  position: absolute; left: 12px; right: 12px; top: calc(86px + env(safe-area-inset-top));
-  z-index: 600; background: rgba(32,33,36,.92); color: #fff;
-  border-radius: 10px; padding: 10px 14px; font-size: 13.5px; text-align: center;
-}
-.banner-warn { background: rgba(217,48,37,.94); }
-.banner { top: calc(86px + env(safe-area-inset-top) + var(--i, 0) * 54px); }
-
-/* ---- POI markers ---- */
-.poi-marker {
-  width: 30px; height: 30px; border-radius: 50%;
-  background: #fff; border: 2.5px solid var(--c);
+  width: 44px; height: 44px; border-radius: 50%; border: none;
+  background: var(--g-surface); color: var(--g-text-2);
+  box-shadow: var(--el-2); cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  font-size: 15px; box-shadow: 0 1px 4px rgba(0,0,0,.35);
 }
-.poi-selected { transform: scale(1.35); z-index: 10; }
+.fab:active { background: var(--g-hover); }
+.fab-on { color: var(--g-blue); }
 
-/* ---- User marker ---- */
+/* ============ Banner ============ */
+.banner {
+  position: absolute; left: 12px; right: 12px; z-index: 550;
+  top: calc(72px + env(safe-area-inset-top) + var(--i, 0) * 52px);
+  background: #202124; color: #fff; border-radius: 8px;
+  padding: 12px 16px; font-size: 13px; line-height: 1.4; box-shadow: var(--el-2);
+}
+.app.guiding .banner { top: calc(80px + env(safe-area-inset-top) + var(--i, 0) * 52px); }
+.banner-warn { background: #c5221f; }
+
+/* ============ Bottom sheet ============ */
+.sheet {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 700;
+  background: var(--g-surface); border-radius: 16px 16px 0 0;
+  box-shadow: var(--el-3);
+  padding: 8px 16px calc(16px + env(safe-area-inset-bottom));
+}
+.sheet-handle {
+  width: 32px; height: 4px; border-radius: 2px; background: var(--g-border);
+  margin: 0 auto 12px;
+}
+.sheet-head { display: flex; align-items: flex-start; gap: 12px; }
+.sheet-title { flex: 1; min-width: 0; }
+.sheet-name { font-size: 22px; font-weight: 400; line-height: 1.25; letter-spacing: 0; }
+.sheet-meta { font-size: 14px; color: var(--g-text-2); margin-top: 4px; }
+.sheet-meta b { color: var(--g-text); font-weight: 500; }
+
+/* Hàng nút hành động kiểu Google Maps */
+.sheet-actions { display: flex; gap: 10px; margin-top: 18px; }
+.btn-filled {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  flex: 1; height: 44px; border: none; border-radius: 22px; cursor: pointer;
+  background: var(--g-blue); color: #fff;
+  font-size: 14px; font-weight: 500; letter-spacing: .15px;
+}
+.btn-filled:active { background: var(--g-blue-dark); }
+.btn-outline {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  height: 44px; padding: 0 20px; cursor: pointer;
+  border: 1px solid var(--g-border); border-radius: 22px;
+  background: var(--g-surface); color: var(--g-blue);
+  font-size: 14px; font-weight: 500;
+}
+
+/* ============ Thẻ dẫn đường ============ */
+.guide-card {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 700;
+  background: var(--g-surface); border-radius: 16px 16px 0 0;
+  box-shadow: var(--el-3);
+  padding: 8px 16px calc(16px + env(safe-area-inset-bottom));
+}
+.guide-row { display: flex; align-items: center; gap: 14px; }
+.guide-mode {
+  width: 44px; height: 44px; border-radius: 50%; flex: 0 0 auto;
+  background: #e8f0fe; color: var(--g-blue);
+  display: flex; align-items: center; justify-content: center;
+}
+.guide-info { flex: 1; min-width: 0; }
+.guide-time { font-size: 22px; font-weight: 500; color: var(--g-green); line-height: 1.15; }
+.guide-time.arrived { color: var(--g-blue); }
+.guide-dist { font-size: 14px; color: var(--g-text-2); margin-top: 2px; }
+.guide-wait { font-size: 15px; color: var(--g-text-2); }
+
+/* ============ Marker ============ */
+.poi-marker {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--c); border: 2px solid #fff; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 1px 4px rgba(60,64,67,.4);
+}
+.poi-selected {
+  width: 40px; height: 40px; margin: -6px 0 0 -6px;
+  box-shadow: 0 2px 8px rgba(60,64,67,.5);
+}
+
+/* Chấm vị trí kiểu Google Maps */
 .user-marker { position: relative; width: 36px; height: 36px; }
 .user-dot {
   position: absolute; left: 50%; top: 50%; width: 16px; height: 16px;
   transform: translate(-50%, -50%);
-  background: #1a73e8; border: 3px solid #fff; border-radius: 50%;
-  box-shadow: 0 0 6px rgba(26,115,232,.8);
+  background: var(--g-blue); border: 2.5px solid #fff; border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(60,64,67,.5);
 }
-.user-arrow {
-  position: absolute; inset: 0;
-}
+.user-arrow { position: absolute; inset: 0; }
 .user-arrow::before {
-  content: ''; position: absolute; left: 50%; top: -2px;
+  content: ''; position: absolute; left: 50%; top: 0;
   transform: translateX(-50%);
-  border-left: 6px solid transparent; border-right: 6px solid transparent;
-  border-bottom: 9px solid #1a73e8;
+  border-left: 7px solid transparent; border-right: 7px solid transparent;
+  border-bottom: 10px solid var(--g-blue);
 }
-.user-stale { opacity: .5; }
+.user-stale { opacity: .45; }
 
-/* ---- Bottom sheet ---- */
-.sheet {
-  position: absolute; left: 0; right: 0; bottom: 0; z-index: 700;
-  background: #fff; border-radius: 16px 16px 0 0;
-  box-shadow: 0 -4px 20px rgba(0,0,0,.2);
-  padding: 14px 16px calc(16px + env(safe-area-inset-bottom));
-}
-.sheet-head { display: flex; align-items: center; gap: 12px; }
-.sheet-icon {
-  width: 42px; height: 42px; border-radius: 50%; flex: 0 0 auto;
-  background: #fff; border: 2.5px solid var(--c);
-  display: flex; align-items: center; justify-content: center; font-size: 20px;
-}
-.sheet-name { font-size: 16px; font-weight: 700; }
-.sheet-cat { font-size: 13px; color: #666; }
-.sheet-close {
-  margin-left: auto; border: none; background: #f1f3f4; border-radius: 50%;
-  width: 32px; height: 32px; font-size: 14px; cursor: pointer;
-}
-.sheet-dist { margin-top: 10px; font-size: 14px; color: #333; }
-.btn-route {
-  width: 100%; margin-top: 12px; border: none; border-radius: 10px;
-  background: #1a6b3c; color: #fff; padding: 13px;
-  font-size: 15px; font-weight: 700; cursor: pointer;
-}
-
-/* ---- Calibrate ---- */
+/* ============ Căn chỉnh (chế độ debug) ============ */
 .cal-handle {
   width: 28px; height: 28px; border-radius: 6px;
-  background: #d93025; color: #fff; font-size: 11px; font-weight: 700;
+  background: var(--g-red); color: #fff; font-size: 11px; font-weight: 500;
   display: flex; align-items: center; justify-content: center;
-  border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4);
+  border: 2px solid #fff; box-shadow: var(--el-2);
 }
-.cal-center { background: #1a73e8; border-radius: 50%; font-size: 15px; }
+.cal-center { background: var(--g-blue); border-radius: 50%; font-size: 15px; }
 .cal-panel {
   position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 700;
-  background: rgba(255,255,255,.96); border-radius: 12px; padding: 12px;
-  font-size: 13px; max-height: 45vh; overflow-y: auto;
-  box-shadow: 0 2px 12px rgba(0,0,0,.3);
+  background: rgba(255,255,255,.97); border-radius: 12px; padding: 14px;
+  font-size: 13px; max-height: 45vh; overflow-y: auto; box-shadow: var(--el-3);
 }
-.cal-title { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
-.cal-help { color: #444; margin-bottom: 8px; }
-.cal-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+.cal-title { font-weight: 500; font-size: 15px; margin-bottom: 4px; }
+.cal-help { color: var(--g-text-2); margin-bottom: 10px; }
+.cal-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
 .cal-row input[type="range"] { flex: 1; }
 .cal-json {
-  background: #f1f3f4; border-radius: 8px; padding: 8px;
-  font-size: 11px; overflow-x: auto; margin: 0;
+  background: var(--g-bg); border-radius: 8px; padding: 10px;
+  font-size: 11px; overflow-x: auto; margin: 0; font-family: 'Roboto Mono', monospace;
 }
 .btn {
-  border: 1px solid #dadce0; background: #fff; border-radius: 8px;
-  padding: 7px 12px; font-size: 13px; font-weight: 600; cursor: pointer;
+  border: 1px solid var(--g-border); background: var(--g-surface); border-radius: 18px;
+  padding: 8px 16px; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--g-text);
 }
-.btn-primary { background: #1a73e8; border-color: #1a73e8; color: #fff; }
+.btn-primary { background: var(--g-blue); border-color: var(--g-blue); color: #fff; }

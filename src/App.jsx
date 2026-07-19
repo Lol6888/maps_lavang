@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import MapView from './components/MapView.jsx'
 import HomeScreen from './components/HomeScreen.jsx'
+import Icon from './components/Icon.jsx'
 import { CATEGORIES, POIS } from './data/pois.js'
 import { MASK_W, MASK_H } from './data/walkmask.js'
 import { findRoute } from './map/router.js'
@@ -33,7 +34,7 @@ export default function App() {
   const [selectedPoi, setSelectedPoi] = useState(null)
   const [follow, setFollow] = useState(false)
 
-  // Ứng dụng dẫn đường: cần vị trí ngay từ đầu để xếp thẻ theo khoảng cách
+  // Ứng dụng dẫn đường: cần vị trí ngay từ đầu để xếp danh sách theo khoảng cách
   const geo = useGeolocation(MODE !== 'calibrate', MOCK_POS)
   const pos = geo.position
 
@@ -103,9 +104,10 @@ export default function App() {
   }
 
   const guiding = MODE === 'normal' && !!destination
+  const appClass = `app${guiding ? ' guiding' : ''}${!guiding && selectedPoi ? ' has-sheet' : ''}`
 
   return (
-    <div className="app">
+    <div className={appClass}>
       <MapView
         mode={MODE}
         layer={layer}
@@ -124,21 +126,23 @@ export default function App() {
 
       {MODE === 'normal' && (
         <>
-          {guiding ? (
-            <GuideBar
-              destination={destination}
-              routeInfo={routeInfo}
-              arrived={arrived}
-              hasPosition={!!pos}
-              insideCampus={insideCampus}
-              onBack={goHome}
-            />
-          ) : (
-            <header className="topbar">
-              <div className="topbar-row">
-                <button className="icon-btn" onClick={goHome} title="Về danh sách địa điểm">‹</button>
-                <h1>Bản đồ tổng quan</h1>
+          <div className="map-top">
+            <div className="top-pill">
+              <button className="icon-btn" onClick={goHome} aria-label="Quay lại danh sách">
+                <Icon name="ArrowBack" size={22} />
+              </button>
+              <div className="pill-text">
+                <div className="pill-title">{guiding ? destination.name : 'Bản đồ tổng quan'}</div>
+                {guiding && <div className="pill-sub">Đi bộ từ vị trí của bạn</div>}
               </div>
+              {guiding && (
+                <button className="icon-btn" onClick={showOverview} aria-label="Xem toàn bộ bản đồ">
+                  <Icon name="Map" size={22} />
+                </button>
+              )}
+            </div>
+
+            {!guiding && (
               <div className="chips">
                 {Object.entries(CATEGORIES).map(([key, c]) => (
                   <button
@@ -147,12 +151,13 @@ export default function App() {
                     style={{ '--c': c.color }}
                     onClick={() => toggleCat(key)}
                   >
+                    <Icon name={c.icon} size={18} />
                     {c.label}
                   </button>
                 ))}
               </div>
-            </header>
-          )}
+            )}
+          </div>
 
           <div className="fabs">
             <button
@@ -160,43 +165,36 @@ export default function App() {
               title={layer === 'tree' ? 'Ẩn cây để xem rõ lối đi' : 'Hiện cây'}
               onClick={() => setLayer((l) => (l === 'tree' ? 'notree' : 'tree'))}
             >
-              {layer === 'tree' ? '🌳' : '🚫'}
+              <Icon name={layer === 'tree' ? 'Park' : 'Layers'} size={22} />
             </button>
-            {guiding && (
-              <button className="fab" title="Xem toàn bộ bản đồ" onClick={showOverview}>🗺️</button>
-            )}
             <button
-              className={`fab locate-fab${follow ? ' fab-on' : ''}`}
+              className={`fab${follow ? ' fab-on' : ''}`}
               title="Vị trí của tôi"
               onClick={() => setFollow((f) => !f)}
             >
-              ➤
+              <Icon name={follow ? 'MyLocation' : 'Navigation'} size={22} />
             </button>
           </div>
 
           <Banners geo={geo} pos={pos} insideCampus={insideCampus} guiding={guiding} routeInfo={routeInfo} />
 
+          {guiding && (
+            <GuideCard
+              routeInfo={routeInfo}
+              arrived={arrived}
+              hasPosition={!!pos}
+              insideCampus={insideCampus}
+            />
+          )}
+
           {!guiding && selectedPoi && (
-            <div className="sheet">
-              <div className="sheet-head">
-                <span className="sheet-icon" style={{ '--c': CATEGORIES[selectedPoi.cat].color }}>
-                  {selectedPoi.icon}
-                </span>
-                <div>
-                  <div className="sheet-name">{selectedPoi.name}</div>
-                  <div className="sheet-cat">{CATEGORIES[selectedPoi.cat].label}</div>
-                </div>
-                <button className="sheet-close" onClick={() => setSelectedPoi(null)}>✕</button>
-              </div>
-              {pos && (
-                <div className="sheet-dist">
-                  📍 Cách bạn khoảng {formatDistance(straightDistance(cal, selectedPoi, pos))}
-                </div>
-              )}
-              <button className="btn-route" onClick={() => pickDestination(selectedPoi)}>
-                ➤ Chỉ đường tới đây
-              </button>
-            </div>
+            <PlaceSheet
+              poi={selectedPoi}
+              cal={cal}
+              pos={pos}
+              onClose={() => setSelectedPoi(null)}
+              onRoute={() => pickDestination(selectedPoi)}
+            />
           )}
         </>
       )}
@@ -220,30 +218,66 @@ export default function App() {
   )
 }
 
-function GuideBar({ destination, routeInfo, arrived, hasPosition, insideCampus, onBack }) {
+function GuideCard({ routeInfo, arrived, hasPosition, insideCampus }) {
   return (
-    <header className="guidebar">
-      <button className="icon-btn" onClick={onBack} title="Về danh sách địa điểm">‹</button>
-      <span className="guide-icon">{destination.icon}</span>
-      <div className="guide-text">
-        <div className="guide-name">{destination.name}</div>
-        <div className="guide-sub">
+    <div className="guide-card">
+      <div className="sheet-handle" />
+      <div className="guide-row">
+        <span className="guide-mode">
+          <Icon name="DirectionsWalk" size={24} />
+        </span>
+        <div className="guide-info">
           {arrived ? (
-            <b>Bạn đã tới nơi</b>
+            <div className="guide-time arrived">Bạn đã tới nơi</div>
           ) : routeInfo ? (
             <>
-              <b>{formatDistance(routeInfo.meters)}</b> · khoảng {walkMinutes(routeInfo.meters)} phút đi bộ
+              <div className="guide-time">{walkMinutes(routeInfo.meters)} phút</div>
+              <div className="guide-dist">{formatDistance(routeInfo.meters)} · đi bộ</div>
             </>
-          ) : !hasPosition ? (
-            'Đang chờ vị trí GPS…'
-          ) : !insideCampus ? (
-            'Bạn đang ở ngoài khuôn viên'
           ) : (
-            'Chưa tìm được lối đi'
+            <div className="guide-wait">
+              {!hasPosition
+                ? 'Đang chờ vị trí GPS…'
+                : !insideCampus
+                  ? 'Bạn đang ở ngoài khuôn viên'
+                  : 'Chưa tìm được lối đi'}
+            </div>
           )}
         </div>
       </div>
-    </header>
+    </div>
+  )
+}
+
+function PlaceSheet({ poi, cal, pos, onClose, onRoute }) {
+  const cat = CATEGORIES[poi.cat]
+  return (
+    <div className="sheet">
+      <div className="sheet-handle" />
+      <div className="sheet-head">
+        <div className="sheet-title">
+          <div className="sheet-name">{poi.name}</div>
+          <div className="sheet-meta">
+            {pos ? (
+              <>
+                <b>{formatDistance(straightDistance(cal, poi, pos))}</b> · {cat.label}
+              </>
+            ) : (
+              cat.label
+            )}
+          </div>
+        </div>
+        <button className="icon-btn" onClick={onClose} aria-label="Đóng">
+          <Icon name="Close" size={22} />
+        </button>
+      </div>
+      <div className="sheet-actions">
+        <button className="btn-filled" onClick={onRoute}>
+          <Icon name="DirectionsWalk" size={20} />
+          Chỉ đường
+        </button>
+      </div>
+    </div>
   )
 }
 
