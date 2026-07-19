@@ -19,9 +19,25 @@ npm run dev
 ## Giao diện
 
 Theo ngôn ngữ thiết kế Material / Google Maps: ô tìm kiếm dạng pill có bóng, chip lọc,
-bottom sheet có tay kéo, nút tonal/filled bo tròn, thang độ nổi (elevation) và bảng màu Google
-(`#1a73e8`, `#ea4335`, `#188038`, `#5f6368`, `#dadce0`). Tuyến đường vẽ màu `#4285f4` viền `#185abc`
-như Google Maps.
+bottom sheet có tay kéo, nút bo tròn, thang độ nổi (elevation). Tuyến đường vẽ màu `#4285f4`
+viền `#185abc` như Google Maps.
+
+**Hai bề mặt, hai bảng màu — cố ý:**
+
+- *Trang chủ* là bề mặt thương hiệu: nền giấy ấm `#f4f3f0`, thẻ trắng, chữ mực navy `#16283f`,
+  nút chính navy `#0d1f38` — nối tiếp trang bìa. Tiêu đề phân khu dùng Roboto Slab.
+- *Bản đồ* là bề mặt công cụ: giữ xanh Google cho tuyến đường và nút chỉ đường, vì xanh =
+  dẫn đường là quy ước ai cũng hiểu.
+
+Màu 4 danh mục là bảng trầm (`#7d6029` vàng kim, `#3f5c78` lam đá, `#6b5744` nâu đá,
+`#9c4a3c` đỏ gạch) thay cho bảng rực của Google — 4 màu bão hòa cao đứng cạnh nhau trông
+như app tiện ích, không hợp với nơi hành hương. Mọi cặp màu/nền đã kiểm tra đạt WCAG AA
+(thấp nhất 5.29:1).
+
+**Marker trên bản đồ dùng nền trắng + viền/icon màu danh mục**, không tô đặc: màu trầm tô đặc
+sẽ chìm vào ảnh vệ tinh. Điểm đang chọn thì đảo lại — tô đặc màu danh mục, icon trắng, to hơn.
+Tương tự, chip lọc nằm trên bản đồ phải chồng lớp tint lên nền trắng đặc
+(`linear-gradient(var(--c-bg), var(--c-bg)), #fff`), để tint trong suốt là chip biến mất.
 
 - **Font: Roboto**, self-host qua `@fontsource/roboto` — chỉ nạp subset `latin` + `vietnamese`
   ở 3 độ đậm (400/500/700). Không dùng Google Sans vì đó là font độc quyền của Google,

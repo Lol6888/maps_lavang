@@ -12,10 +12,11 @@ const ICONS = [
   // chế độ căn chỉnh
   'expand_more', 'expand_less', 'content_copy', 'save', 'restart_alt',
   'open_with', 'center_focus_strong', 'tune',
-  // địa điểm
-  'church', 'water_drop', 'castle', 'account_balance', 'wc', 'battery_charging_full',
-  'medical_services', 'restaurant', 'hotel', 'celebration', 'cottage', 'shield',
-  'support_agent', 'meeting_room', 'apartment', 'groups',
+  // địa điểm — ưu tiên icon đúng nghĩa và trang nghiêm; kho Material không có
+  // "tháp"/"tượng đài" nên các công trình di tích dùng chung account_balance
+  'church', 'account_balance', 'water', 'water_drop', 'local_drink', 'restaurant',
+  'wc', 'charging_station', 'hotel', 'night_shelter', 'domain', 'groups',
+  'door_front', 'shield', 'local_hospital', 'volunteer_activism',
 ]
 
 const toPascal = (s) => s.split('_').map((w) => w[0].toUpperCase() + w.slice(1)).join('')

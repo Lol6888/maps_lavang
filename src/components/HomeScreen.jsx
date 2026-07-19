@@ -82,7 +82,7 @@ export default function HomeScreen({ cal, position, onPick, onOverview, geoStatu
           const open = isOpen(g.key)
           const nearest = g.items[0]?.dist
           return (
-            <section key={g.key} className="section" style={{ '--c': g.meta.color, '--c-bg': `${g.meta.color}1f` }}>
+            <section key={g.key} className="section" style={{ '--c': g.meta.color, '--c-bg': `${g.meta.color}14` }}>
               <button className="section-head" onClick={() => toggle(g.key)} aria-expanded={open}>
                 <span className="section-avatar">
                   <Icon name={g.meta.icon} size={22} />

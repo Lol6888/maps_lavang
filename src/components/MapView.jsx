@@ -200,10 +200,10 @@ export default function MapView({
       const icon = L.divIcon({
         className: '',
         html: `<div class="poi-marker${selected ? ' poi-selected' : ''}" style="--c:${color}">${
-          iconSvg(poi.icon, { size: selected ? 22 : 16, color: '#fff' })
+          iconSvg(poi.icon, { size: selected ? 24 : 17, color: selected ? '#fff' : color })
         }</div>`,
-        iconSize: [28, 28],
-        iconAnchor: [14, 14],
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
       })
       const m = L.marker(uvToLatLng(frame, poi.u, poi.v), { icon, title: poi.name })
       m.on('click', () => handlersRef.current.onSelectPoi?.(poi))

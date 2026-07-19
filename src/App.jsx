@@ -149,7 +149,7 @@ export default function App() {
                   <button
                     key={key}
                     className={`chip${activeCats.has(key) ? ' chip-on' : ''}`}
-                    style={{ '--c': c.color }}
+                    style={{ '--c': c.color, '--c-bg': `${c.color}1f` }}
                     onClick={() => toggleCat(key)}
                   >
                     <Icon name={c.icon} size={18} />
