@@ -27,12 +27,17 @@ export default function HomeScreen({ cal, position, onPick, onOverview, geoStatu
 
   return (
     <div className="home">
-      <div className="home-top">
-        <div className="home-title">
-          Trung tâm hành hương Đức Mẹ La Vang
-          <span>Chọn địa điểm để được chỉ đường</span>
+      <header className="hero">
+        <div className="hero-photo" />
+        <div className="hero-caption">
+          <p className="hero-eyebrow">Trung tâm hành hương</p>
+          <h1 className="hero-title">Đức Mẹ La&nbsp;Vang</h1>
+          <div className="hero-rule" />
+          <p className="hero-sub">La Vang · Quảng Trị</p>
         </div>
+      </header>
 
+      <div className="home-top">
         <div className="searchbar">
           <Icon name="Search" size={22} />
           <input

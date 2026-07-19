@@ -36,18 +36,57 @@ button { font-family: inherit; }
   height: 100%; overflow-y: auto; background: var(--g-surface);
   padding-bottom: calc(24px + env(safe-area-inset-bottom));
 }
-.home-top {
-  position: sticky; top: 0; z-index: 5; background: var(--g-surface);
-  padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+/* Trang bìa: ảnh Vương Cung Thánh Đường + lớp phủ tối cho chữ nổi rõ */
+/* Trang bìa: ảnh Thánh Đường ở trên (không bị chữ che tháp cổ),
+   phần chữ nằm trên dải nền sẫm bên dưới — dễ đọc và trang nghiêm hơn. */
+.hero { background: #0d1f38; color: #fff; text-align: center; }
+.hero-photo {
+  position: relative;
+  height: calc(214px + env(safe-area-inset-top));
+  background: url('/img/hero.webp') center 44% / cover no-repeat;
 }
-.home-title { font-size: 16px; font-weight: 500; letter-spacing: .1px; }
-.home-title span { display: block; font-size: 12px; color: var(--g-text-2); font-weight: 400; margin-top: 1px; }
+.hero-photo::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(13,31,56,.30) 0%,
+    rgba(13,31,56,0) 34%,
+    rgba(13,31,56,.55) 76%,
+    #0d1f38 100%
+  );
+}
+.hero-caption { padding: 4px 20px 36px; }
+.hero-eyebrow {
+  margin: 0 0 8px; font-size: 11px; font-weight: 500;
+  letter-spacing: 3px; text-transform: uppercase; color: #e8c98a;
+  text-shadow: 0 1px 6px rgba(0,0,0,.6);
+}
+.hero-title {
+  margin: 0; font-family: 'Roboto Slab', Roboto, Georgia, serif;
+  font-size: 32px; font-weight: 600; line-height: 1.14; letter-spacing: .2px;
+  text-shadow: 0 2px 16px rgba(0,0,0,.6);
+}
+/* Gạch phân cách mảnh, gợi nét trang trí nhà thờ */
+.hero-rule {
+  width: 46px; height: 1.5px; margin: 13px auto 0;
+  background: linear-gradient(90deg, transparent, #e8c98a, transparent);
+}
+.hero-sub {
+  margin: 11px 0 0; font-size: 12.5px; letter-spacing: .5px;
+  color: rgba(255,255,255,.85); text-shadow: 0 1px 6px rgba(0,0,0,.6);
+}
+
+/* Ô tìm kiếm nổi đè lên mép dưới ảnh bìa */
+.home-top {
+  position: relative; z-index: 2; margin-top: -26px;
+  padding: 0 16px 12px;
+}
 
 /* Ô tìm kiếm kiểu Google Maps: pill trắng, bo 24px, có bóng */
 .searchbar {
   display: flex; align-items: center; gap: 12px;
-  height: 48px; margin-top: 12px; padding: 0 16px;
-  background: var(--g-surface); border-radius: 24px; box-shadow: var(--el-2);
+  height: 48px; padding: 0 16px;
+  background: var(--g-surface); border-radius: 24px; box-shadow: var(--el-3);
 }
 .searchbar svg { color: var(--g-text-2); flex: 0 0 auto; }
 .searchbar input {

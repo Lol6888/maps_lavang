@@ -25,7 +25,13 @@ như Google Maps.
 
 - **Font: Roboto**, self-host qua `@fontsource/roboto` — chỉ nạp subset `latin` + `vietnamese`
   ở 3 độ đậm (400/500/700). Không dùng Google Sans vì đó là font độc quyền của Google,
-  không cấp phép cho bên thứ ba.
+  không cấp phép cho bên thứ ba. Riêng tiêu đề trang bìa dùng **Roboto Slab 600** (1 độ đậm)
+  cho cảm giác trang nghiêm.
+- **Trang bìa**: ảnh Vương Cung Thánh Đường (`assets-src/vctd.jpg` → crop `public/img/hero.webp`)
+  đặt thành dải ảnh phía trên, phần chữ nằm trên nền sẫm `#0d1f38` bên dưới — cố ý không
+  overlay chữ lên ảnh vì chữ căn giữa sẽ che đúng tháp cổ. Ô tìm kiếm nổi đè lên mép dải sẫm.
+  Đổi ảnh bìa: crop lại bằng
+  `ffmpeg -i assets-src/vctd.jpg -vf "crop=1750:1000:150:330,scale=1400:-1" public/img/hero.webp`.
 - **Icon: Material Design Icons** (Apache 2.0). `scripts/gen-icons.mjs` trích path SVG của
   đúng 28 icon cần dùng vào `src/components/iconPaths.js` (~5KB) thay vì tải cả font icon (~300KB).
   Thêm icon: sửa mảng `ICONS` trong script rồi chạy `npm i -D @material-design-icons/svg && node scripts/gen-icons.mjs`.
