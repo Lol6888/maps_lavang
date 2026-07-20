@@ -40,7 +40,8 @@ body {
 button { font-family: inherit; }
 
 .app { position: relative; height: 100%; }
-.map-root { position: absolute; inset: 0; background: #e8eaed; z-index: 0; }
+/* Nền trùng màu giấy kem của sơ đồ vùng để mép canvas không lộ */
+.map-root { position: absolute; inset: 0; background: #fffdea; z-index: 0; }
 
 /* ============ Màn hình chọn địa điểm ============ */
 .home {

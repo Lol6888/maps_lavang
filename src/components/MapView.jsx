@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import L from 'leaflet'
 import { rotatedImageOverlay } from '../map/RotatedImageOverlay.js'
 import {
@@ -7,6 +7,7 @@ import {
 } from '../map/calibration.js'
 import { CATEGORIES } from '../data/pois.js'
 import { BACKDROP } from '../data/backdrop.js'
+import { REGION, REGION_SWAP_ZOOM } from '../data/region.js'
 import { iconSvg } from './Icon.jsx'
 
 const MAP_URLS = {
@@ -29,11 +30,15 @@ export default function MapView({
   follow,
   onUserInteract,
   route, // [{u, v}] | null — đường đi bộ tới đích
+  routeDashed, // true = đường chim bay (nét đứt), không phải lối đi thật
   fitKey, // đổi giá trị này để zoom vừa khít đường đi
 }) {
   // Chế độ thường vẽ trong khung "campus-up"; calibrate vẽ trong khung thật
   const displayCal = useMemo(() => displayCalFrom(cal), [cal])
   const frame = mode === 'calibrate' ? cal : displayCal
+
+  // Zoom xa: ẩn artwork + vệ tinh, chỉ hiện sơ đồ vùng
+  const [lowZoom, setLowZoom] = useState(false)
 
   const divRef = useRef(null)
   const mapRef = useRef(null)
@@ -45,21 +50,26 @@ export default function MapView({
   const cornerMarkersRef = useRef(null)
   const routeLayerRef = useRef(null)
   const backdropRef = useRef(null)
+  const regionRef = useRef(null)
   const handlersRef = useRef({})
 
-  // Góc ảnh nền vệ tinh, đưa từ tọa độ thật sang khung đang hiển thị
-  const backdropCorners = useMemo(() => {
+  // Góc các ảnh nền (tọa độ thật) đưa sang khung đang hiển thị
+  const toDisplayCorners = (src) => {
     const toDisplay = (ll) => {
       const { u, v } = latLngToUv(cal, ll)
       const p = uvToLatLng(frame, u, v)
       return [p.lat, p.lng]
     }
     return {
-      topleft: toDisplay(BACKDROP.topleft),
-      topright: toDisplay(BACKDROP.topright),
-      bottomleft: toDisplay(BACKDROP.bottomleft),
+      topleft: toDisplay(src.topleft),
+      topright: toDisplay(src.topright),
+      bottomleft: toDisplay(src.bottomleft),
     }
-  }, [cal, frame])
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const backdropCorners = useMemo(() => toDisplayCorners(BACKDROP), [cal, frame])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const regionCorners = useMemo(() => toDisplayCorners(REGION), [cal, frame])
 
   // callbacks/props mới nhất cho các listener gắn 1 lần
   handlersRef.current = { onSelectPoi, onUserInteract, onCalChange, cal, frame, mode }
@@ -69,13 +79,14 @@ export default function MapView({
     const map = L.map(divRef.current, {
       zoomControl: false,
       attributionControl: false,
-      // Zoom nhỏ hơn mức này sẽ lộ mép ảnh vệ tinh nền
-      minZoom: 15.75,
+      minZoom: 13.5,
       maxZoom: 21,
       zoomSnap: 0.25,
     })
-    // Ảnh vệ tinh nền nằm dưới ảnh bản đồ (overlayPane có zIndex 400)
+    // Sơ đồ vùng (340) dưới vệ tinh (350), cả hai dưới ảnh bản đồ (overlayPane 400)
+    map.createPane('regionPane').style.zIndex = 340
     map.createPane('backdropPane').style.zIndex = 350
+    map.on('zoomend', () => setLowZoom(map.getZoom() < REGION_SWAP_ZOOM))
     map.setView(campusCenter(frame), 16.5)
     map.on('dragstart', () => handlersRef.current.onUserInteract?.())
     map.on('click', (e) => {
@@ -99,6 +110,7 @@ export default function MapView({
       overlayRef.current = null
       satRef.current = null
       backdropRef.current = null
+      regionRef.current = null
       routeLayerRef.current = null
       userMarkerRef.current = null
       accCircleRef.current = null
@@ -121,11 +133,32 @@ export default function MapView({
     }
   }, [mode])
 
-  // ---- Ảnh vệ tinh nền (chế độ thường; calibrate đã có tile sống) ----
+  // ---- Sơ đồ vùng (luôn hiện ở chế độ thường, nằm dưới cùng) ----
   useEffect(() => {
     const map = mapRef.current
     if (!map) return
     if (mode === 'calibrate') {
+      if (regionRef.current) { map.removeLayer(regionRef.current); regionRef.current = null }
+      return
+    }
+    if (!regionRef.current) {
+      regionRef.current = rotatedImageOverlay(
+        REGION.url,
+        regionCorners.topleft, regionCorners.topright, regionCorners.bottomleft,
+        { pane: 'regionPane' }
+      ).addTo(map)
+    } else {
+      regionRef.current.setCorners(
+        regionCorners.topleft, regionCorners.topright, regionCorners.bottomleft
+      )
+    }
+  }, [mode, regionCorners])
+
+  // ---- Ảnh vệ tinh nền (chế độ thường, chỉ khi zoom gần) ----
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+    if (mode === 'calibrate' || lowZoom) {
       if (backdropRef.current) {
         map.removeLayer(backdropRef.current)
         backdropRef.current = null
@@ -143,9 +176,9 @@ export default function MapView({
         backdropCorners.topleft, backdropCorners.topright, backdropCorners.bottomleft
       )
     }
-  }, [mode, backdropCorners])
+  }, [mode, backdropCorners, lowZoom])
 
-  // ---- Ảnh bản đồ overlay ----
+  // ---- Ảnh bản đồ overlay (ẩn khi zoom xa — sơ đồ vùng tự thể hiện khuôn viên) ----
   useEffect(() => {
     const map = mapRef.current
     if (!map) return
@@ -153,14 +186,14 @@ export default function MapView({
       map.removeLayer(overlayRef.current)
       overlayRef.current = null
     }
-    if (layer !== 'none') {
+    if (layer !== 'none' && !(mode === 'normal' && lowZoom)) {
       overlayRef.current = rotatedImageOverlay(
         MAP_URLS[layer], frame.topleft, frame.topright, frame.bottomleft,
         { opacity: overlayOpacity }
       ).addTo(map)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [layer])
+  }, [layer, lowZoom, mode])
 
   // corners/opacity thay đổi → cập nhật overlay hiện có
   useEffect(() => {
@@ -175,26 +208,31 @@ export default function MapView({
     const map = mapRef.current
     if (!map) return
     if (mode === 'normal') {
-      // Ảnh nền là hình vuông 2800m bị xoay ~14.4°, nên vùng an toàn (không lộ
-      // mép chéo) nhỏ hơn hình bao của nó: ±900m ngang, ±1150m dọc quanh tâm.
-      // Quy ra đơn vị uv của khung hiển thị (khuôn viên rộng ~390m, cao ~694m).
-      const PAN_U = 900 / 390
-      const PAN_V = 1150 / 694
-      map.setMaxBounds(L.latLngBounds([
-        uvToLatLng(frame, 0.5 - PAN_U, 0.5 - PAN_V),
-        uvToLatLng(frame, 0.5 + PAN_U, 0.5 + PAN_V),
-      ]))
+      // Cho pan tới hết sơ đồ vùng (~6.9 x 4.9 km)
+      const b = regionCorners
+      const fourth = [
+        b.topright[0] + b.bottomleft[0] - b.topleft[0],
+        b.topright[1] + b.bottomleft[1] - b.topleft[1],
+      ]
+      map.setMaxBounds(
+        L.latLngBounds([b.topleft, b.topright, b.bottomleft, fourth]).pad(0.02)
+      )
     } else {
       map.setMaxBounds(null)
     }
-  }, [mode, frame])
+  }, [mode, regionCorners])
 
   // ---- POI markers ----
   useEffect(() => {
     const group = poiLayerRef.current
     if (!group) return
     group.clearLayers()
-    for (const poi of pois) {
+    // Zoom xa: khuôn viên chỉ còn ~340px, 29 marker sẽ đè nhau — chỉ giữ nhóm
+    // đi lại (bãi đỗ xe, đón trả khách) là thứ người ta cần ở tầm nhìn vùng.
+    const visible = lowZoom
+      ? pois.filter((p) => p.cat === 'giaothong' || p.id === selectedPoiId)
+      : pois
+    for (const poi of visible) {
       const color = CATEGORIES[poi.cat]?.color || '#5f6368'
       const selected = poi.id === selectedPoiId
       const icon = L.divIcon({
@@ -209,7 +247,7 @@ export default function MapView({
       m.on('click', () => handlersRef.current.onSelectPoi?.(poi))
       group.addLayer(m)
     }
-  }, [pois, frame, selectedPoiId])
+  }, [pois, frame, selectedPoiId, lowZoom])
 
   // Pan tới POI được chọn
   useEffect(() => {
@@ -231,14 +269,19 @@ export default function MapView({
     if (!route || route.length < 2) return
     const latlngs = route.map((p) => uvToLatLng(frame, p.u, p.v))
     const style = { lineCap: 'round', lineJoin: 'round', interactive: false }
+    const lines = routeDashed
+      ? [L.polyline(latlngs, { ...style, color: '#4285f4', weight: 5, dashArray: '2 12', opacity: 0.9 })]
+      : [
+          L.polyline(latlngs, { ...style, color: '#185abc', weight: 11, opacity: 0.9 }),
+          L.polyline(latlngs, { ...style, color: '#4285f4', weight: 7 }),
+        ]
     routeLayerRef.current = L.layerGroup([
-      L.polyline(latlngs, { ...style, color: '#185abc', weight: 11, opacity: 0.9 }),
-      L.polyline(latlngs, { ...style, color: '#4285f4', weight: 7 }),
+      ...lines,
       L.circleMarker(latlngs[latlngs.length - 1], {
         radius: 7, color: '#fff', weight: 3, fillColor: '#ea4335', fillOpacity: 1, interactive: false,
       }),
     ]).addTo(map)
-  }, [route, frame])
+  }, [route, routeDashed, frame])
 
   // Zoom vừa khít đường đi khi đổi đích
   useEffect(() => {

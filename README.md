@@ -58,6 +58,24 @@ Tương tự, chip lọc nằm trên bản đồ phải chồng lớp tint lên 
 - **React + Vite + Leaflet** (không dùng react-leaflet).
 - Ảnh bản đồ vẽ lại (7843×13934) được **georeference** vào tọa độ thật bằng 3 điểm neo lấy từ OSM (Vương Cung Thánh Đường, Tháp chuông, hồ trái) — fit similarity transform, residual ≤ 2.1m, validate với 5 điểm độc lập sai số ≤ ~7m. Xem `src/map/calibration.js`.
 - **Khung hiển thị "campus-up"**: ảnh gốc xoay ~194° so với hướng Bắc. Để artwork hiển thị thẳng đứng như thiết kế, chế độ thường vẽ mọi thứ trong khung giả đặt ảnh thẳng trục; tọa độ GPS thật được đổi qua (u,v) của khung thật rồi chiếu vào khung hiển thị (`realToDisplay`). Mũi tên heading được trừ góc xoay khuôn viên (~165.6°).
+- **Sơ đồ vùng** (`assets-src/map no label.webp` → `scripts/gen-region.mjs` → `public/map/region.webp`
+  + `src/data/region.js`): poster chỉ đường 6.9×4.9km quanh La Vang (QL1A, Lê Lợi một chiều,
+  Liên Xã, bãi đỗ xe, Cầu Trắng, sông Thạch Hãn). **Sơ đồ này KHÔNG đúng tỉ lệ toàn cục** —
+  hành lang phía đông đúng thực địa nhưng phần bắc lên Cầu Trắng bị nén ~2 lần và lệch ~19°
+  (đã kiểm chứng với 3 giao lộ OSM: fit toàn cục cho residual 600–1000m). Georeference vì thế
+  fit theo 2 neo gần khuôn viên (Lê Lợi×Liên Xã node 3100290389 + đầu đông Liên Xã node
+  1021092494; scale 2.058 m/px, xoay 1.03°) — GPS chính xác ở vành đai đỗ xe/đi bộ vào,
+  phần bắc chỉ minh họa. Xem thêm chú thích trong `src/data/region.js`.
+  - **Chuyển lớp theo zoom** (`REGION_SWAP_ZOOM = 15.75`): zoom gần = artwork khuôn viên +
+    vệ tinh + đủ POI; zoom xa = chỉ sơ đồ vùng (hình dán khuôn viên trong sơ đồ làm đại diện —
+    hình dán bị vẽ to ~2 lần nên không thể đè artwork chuẩn lên, sẽ thành hai khuôn viên lệch
+    nhau) + POI nhóm Đi lại. `minZoom` 13.5, maxBounds theo canvas sơ đồ.
+  - POI ngoài khuôn viên lưu bằng uv ngoài [0,1] (phép affine ngoại suy được): Điểm đón trả
+    khách (tọa độ OSM thật), Bãi đỗ xe khách (từ sơ đồ qua fit — chưa có ground truth, đo
+    thực địa rồi chỉnh bằng `?editpoi=1`). KHÔNG đặt POI Cầu Trắng: vị trí thật của nó nằm
+    ngoài canvas sơ đồ 1.2km (do phần bắc bị nén) — marker sẽ trôi giữa nền trống.
+  - Chỉ đường tới điểm ngoài mặt nạ lối đi → đường chim bay nét đứt + ghi chú, không giả vờ
+    biết lối đi thật.
 - **Ảnh vệ tinh nền** (`scripts/gen-backdrop.mjs` → `public/map/backdrop.webp` + `src/data/backdrop.js`):
   vùng 2800×2800m quanh khuôn viên, ghép từ tile **Esri World Imagery** ở zoom 16 (~2.3 m/px, 210KB).
   Không dùng tile sống vì chế độ thường xoay bản đồ campus-up còn tile luôn hướng Bắc — sẽ lệch ~194°.

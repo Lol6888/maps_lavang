@@ -17,6 +17,8 @@ const ICONS = [
   'church', 'account_balance', 'water', 'water_drop', 'local_drink', 'restaurant',
   'wc', 'charging_station', 'hotel', 'night_shelter', 'domain', 'groups',
   'door_front', 'shield', 'local_hospital', 'volunteer_activism',
+  // đi lại
+  'directions_bus', 'local_parking',
 ]
 
 const toPascal = (s) => s.split('_').map((w) => w[0].toUpperCase() + w.slice(1)).join('')

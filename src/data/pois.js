@@ -11,6 +11,7 @@ export const CATEGORIES = {
   tienich: { label: 'Tiện ích', color: '#3f5c78', icon: 'LocalDrink' },       // lam đá
   toanha: { label: 'Tòa nhà & khu vực', color: '#6b5744', icon: 'Domain' },   // nâu đá
   hotro: { label: 'Hỗ trợ & y tế', color: '#9c4a3c', icon: 'LocalHospital' }, // đỏ gạch
+  giaothong: { label: 'Đi lại & đỗ xe', color: '#3a5f43', icon: 'DirectionsBus' }, // lục thẫm
 }
 
 export const POIS = [
@@ -50,6 +51,13 @@ export const POIS = [
   { id: 'phat-nuoc-trai', name: 'Điểm phát nước (khu trại trái)', icon: 'LocalDrink', cat: 'tienich', u: 0.408, v: 0.691 },
   { id: 'phat-nuoc-dao', name: 'Điểm phát nước (đảo trái)', icon: 'LocalDrink', cat: 'tienich', u: 0.292, v: 0.849 },
   { id: 'phat-nuoc-giua', name: 'Điểm phát nước (trục chính)', icon: 'LocalDrink', cat: 'tienich', u: 0.533, v: 0.831 },
+
+  // --- Đi lại & đỗ xe (ngoài khuôn viên — uv ngoài [0,1] là bình thường) ---
+  // diem-don-tra: giao Lê Lợi × Liên Xã, tọa độ thật từ OSM (node 3100290389).
+  // bai-do-xe: từ sơ đồ vùng qua fit 2 neo (hành lang Liên Xã tin cậy) — chưa có
+  // ground truth OSM, nên đo thực địa rồi chỉnh lại bằng ?editpoi=1 khi có dịp.
+  { id: 'diem-don-tra', name: 'Điểm đón trả khách', icon: 'DirectionsBus', cat: 'giaothong', u: 0.5148, v: 0.9376 },
+  { id: 'bai-do-xe', name: 'Bãi đỗ xe khách', icon: 'LocalParking', cat: 'giaothong', u: -2.6751, v: 0.8833 },
 
   // --- Tiện ích: sạc điện thoại ---
   { id: 'sac-1', name: 'Sạc điện thoại (khu trại trên)', icon: 'ChargingStation', cat: 'tienich', u: 0.263, v: 0.5525 },

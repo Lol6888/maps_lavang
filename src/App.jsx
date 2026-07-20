@@ -48,12 +48,24 @@ export default function App() {
   const userCellKey = userUV ? `${Math.round(userUV.u * MASK_W)},${Math.round(userUV.v * MASK_H)}` : null
 
   const routeInfo = useMemo(() => {
-    if (!destination || !userUV || !insideCampus) return null
+    if (!destination || !userUV) return null
+    const inRange = (t) => t.u > -0.05 && t.u < 1.05 && t.v > -0.05 && t.v < 1.05
+    // Một trong hai đầu nằm ngoài mặt nạ lối đi (vd bãi đỗ xe) -> đường chim bay
+    if (!inRange(userUV) || !inRange(destination)) {
+      return {
+        path: [
+          { u: userUV.u, v: userUV.v },
+          { u: destination.u, v: destination.v },
+        ],
+        meters: pos ? straightDistance(cal, destination, pos) : 0,
+        dashed: true,
+      }
+    }
     const r = findRoute({ u: userUV.u, v: userUV.v }, { u: destination.u, v: destination.v })
     if (!r) return null
-    return { path: r.path, meters: routeLength(cal, r.path) }
+    return { path: r.path, meters: routeLength(cal, r.path), dashed: false }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [destination, userCellKey, insideCampus, cal])
+  }, [destination, userCellKey, cal])
 
   const arrived = routeInfo && routeInfo.meters < ARRIVED_M
 
@@ -122,6 +134,7 @@ export default function App() {
         follow={follow}
         onUserInteract={() => setFollow(false)}
         route={routeInfo?.path ?? null}
+        routeDashed={routeInfo?.dashed ?? false}
         fitKey={destination?.id ?? null}
       />
 
@@ -232,6 +245,11 @@ function GuideCard({ routeInfo, arrived, hasPosition, insideCampus }) {
         <div className="guide-info">
           {arrived ? (
             <div className="guide-time arrived">Bạn đã tới nơi</div>
+          ) : routeInfo?.dashed ? (
+            <>
+              <div className="guide-time">{formatDistance(routeInfo.meters)}</div>
+              <div className="guide-dist">đường chim bay · điểm nằm ngoài khuôn viên, đi theo biển chỉ dẫn</div>
+            </>
           ) : routeInfo ? (
             <>
               <div className="guide-time">{walkMinutes(routeInfo.meters)} phút</div>
