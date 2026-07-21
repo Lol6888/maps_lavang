@@ -3,6 +3,7 @@ import MapView from './components/MapView.jsx'
 import HomeScreen from './components/HomeScreen.jsx'
 import Icon from './components/Icon.jsx'
 import { CATEGORIES, POIS } from './data/pois.js'
+import { REGION } from './data/region.js'
 import { MASK_W, MASK_H } from './data/walkmask.js'
 import { findRoute } from './map/router.js'
 import { useGeolocation } from './hooks/useGeolocation.js'
@@ -188,6 +189,8 @@ export default function App() {
               <Icon name={follow ? 'MyLocation' : 'Navigation'} size={22} />
             </button>
           </div>
+
+          <div className="attribution">{REGION.attribution}</div>
 
           <Banners geo={geo} pos={pos} insideCampus={insideCampus} guiding={guiding} routeInfo={routeInfo} />
 

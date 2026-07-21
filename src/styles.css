@@ -264,14 +264,24 @@ button { font-family: inherit; }
     -1.5px 1.5px 0 #fffdea, 1.5px 1.5px 0 #fffdea,
     0 0 4px #fffdea;
 }
-.region-label-road { color: #b3261e; }
-.region-label-water { color: #1c6fb8; }
-.region-label-place {
+.region-label-road { color: #8a6a2a; font-size: 10.5px; font-weight: 500; }
+.region-label-village { color: #5f6b56; font-size: 10.5px; font-weight: 500; }
+.region-label-town { color: #2f3a2c; font-size: 12.5px; }
+.region-label-shrine {
   color: #16283f; font-size: 12px;
-  padding: 3px 9px; border-radius: 11px; white-space: nowrap;
-  background: #fffdea; border: 1.5px solid #b3261e; text-shadow: none;
+  padding: 3px 10px; border-radius: 11px;
+  background: #fffdf3; border: 1.5px solid #c62828; text-shadow: none;
   display: inline-block;
 }
+
+/* Ghi công nguồn dữ liệu bản đồ nền (ODbL bắt buộc) */
+.attribution {
+  position: absolute; left: 6px; z-index: 400;
+  bottom: calc(4px + env(safe-area-inset-bottom));
+  background: rgba(255,255,255,.72); border-radius: 3px;
+  padding: 2px 6px; font-size: 10px; color: var(--g-text-2);
+}
+.app.has-sheet .attribution, .app.guiding .attribution { display: none; }
 
 /* ============ Banner ============ */
 .banner {

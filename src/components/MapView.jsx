@@ -36,8 +36,8 @@ export default function MapView({
   const displayCal = useMemo(() => displayCalFrom(cal), [cal])
   const frame = mode === 'calibrate' ? cal : displayCal
 
-  // Zoom xa: ẩn artwork + vệ tinh, chỉ hiện sơ đồ vùng
-  const [lowZoom, setLowZoom] = useState(false)
+  const [zoom, setZoom] = useState(16.5)
+  const lowZoom = zoom < REGION_SWAP_ZOOM
 
   const divRef = useRef(null)
   const mapRef = useRef(null)
@@ -81,7 +81,7 @@ export default function MapView({
     })
     // Sơ đồ vùng nằm dưới ảnh bản đồ (overlayPane có zIndex 400)
     map.createPane('regionPane').style.zIndex = 340
-    map.on('zoomend', () => setLowZoom(map.getZoom() < REGION_SWAP_ZOOM))
+    map.on('zoomend', () => setZoom(map.getZoom()))
     map.setView(campusCenter(frame), 16.5)
     map.on('dragstart', () => handlersRef.current.onUserInteract?.())
     map.on('click', (e) => {
@@ -149,7 +149,7 @@ export default function MapView({
     }
   }, [mode, regionCorners])
 
-  // ---- Nhãn chú thích trên sơ đồ vùng (chỉ khi zoom xa) ----
+  // ---- Nhãn địa danh / tên đường trên bản đồ nền ----
   useEffect(() => {
     const map = mapRef.current
     if (!map) return
@@ -157,22 +157,31 @@ export default function MapView({
       map.removeLayer(labelLayerRef.current)
       labelLayerRef.current = null
     }
-    if (mode !== 'normal' || !lowZoom) return
+    if (mode !== 'normal') return
+    // Nhãn khuôn viên lưu theo uv; nhãn từ OSM lưu theo lat/lng thật
+    const place = (lb) =>
+      lb.u !== undefined
+        ? uvToLatLng(frame, lb.u, lb.v)
+        : (() => {
+            const { u, v } = latLngToUv(cal, { lat: lb.lat, lng: lb.lng })
+            return uvToLatLng(frame, u, v)
+          })()
+    const shown = REGION_LABELS.filter((lb) => zoom >= (lb.minZoom ?? 0))
     labelLayerRef.current = L.layerGroup(
-      REGION_LABELS.map((lb) =>
-        L.marker(uvToLatLng(frame, lb.u, lb.v), {
+      shown.map((lb) =>
+        L.marker(place(lb), {
           interactive: false,
           keyboard: false,
           icon: L.divIcon({
             className: '',
             html: `<div class="region-label region-label-${lb.kind}">${lb.text}</div>`,
-            iconSize: [180, 20],
-            iconAnchor: [90, 10],
+            iconSize: [200, 18],
+            iconAnchor: [100, 9],
           }),
         })
       )
     ).addTo(map)
-  }, [mode, lowZoom, frame])
+  }, [mode, zoom, frame, cal])
 
   // ---- Ảnh bản đồ khuôn viên (luôn hiện — hình dán trong sơ đồ đã bị xóa) ----
   useEffect(() => {

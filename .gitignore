@@ -1,5 +1,8 @@
 node_modules/
 dist/
+# Dữ liệu OSM thô + SVG trung gian: sinh lại bằng scripts/, không cần versioning
+assets-src/osm-region.json
+assets-src/basemap.svg
 .env
 .env.*
 *.local

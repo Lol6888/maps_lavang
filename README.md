@@ -58,30 +58,31 @@ Tương tự, chip lọc nằm trên bản đồ phải chồng lớp tint lên 
 - **React + Vite + Leaflet** (không dùng react-leaflet).
 - Ảnh bản đồ vẽ lại (7843×13934) được **georeference** vào tọa độ thật bằng 3 điểm neo lấy từ OSM (Vương Cung Thánh Đường, Tháp chuông, hồ trái) — fit similarity transform, residual ≤ 2.1m, validate với 5 điểm độc lập sai số ≤ ~7m. Xem `src/map/calibration.js`.
 - **Khung hiển thị "campus-up"**: ảnh gốc xoay ~194° so với hướng Bắc. Để artwork hiển thị thẳng đứng như thiết kế, chế độ thường vẽ mọi thứ trong khung giả đặt ảnh thẳng trục; tọa độ GPS thật được đổi qua (u,v) của khung thật rồi chiếu vào khung hiển thị (`realToDisplay`). Mũi tên heading được trừ góc xoay khuôn viên (~165.6°).
-- **Sơ đồ vùng** (`assets-src/map no label.webp` → `scripts/gen-region.mjs` → `public/map/region.webp`
-  + `src/data/region.js`): poster chỉ đường 6.9×4.9km quanh La Vang (QL1A, Lê Lợi một chiều,
-  Liên Xã, bãi đỗ xe, Cầu Trắng, sông Thạch Hãn). **Sơ đồ này KHÔNG đúng tỉ lệ toàn cục** —
-  hành lang phía đông đúng thực địa nhưng phần bắc lên Cầu Trắng bị nén ~2 lần và lệch ~19°
-  (đã kiểm chứng với 3 giao lộ OSM: fit toàn cục cho residual 600–1000m). Georeference vì thế
-  fit theo 2 neo gần khuôn viên (Lê Lợi×Liên Xã node 3100290389 + đầu đông Liên Xã node
-  1021092494; scale 2.058 m/px, xoay 1.03°) — GPS chính xác ở vành đai đỗ xe/đi bộ vào,
-  phần bắc chỉ minh họa. Xem thêm chú thích trong `src/data/region.js`.
-  - **Hình dán khuôn viên trong sơ đồ bị XÓA** khi build asset (`scripts/gen-region.mjs`):
-    nó bị vẽ to gấp ~2 lần và xoay ~5° thay vì 14.4°, nên nếu giữ thì viền đỏ của nó lòi ra
-    quanh lớp artwork đã georeference chuẩn thành "hai khuôn viên lệch nhau". Vùng xóa tô lại
-    bằng màu giấy nền; các tuyến đường đều kết thúc ở rìa khuôn viên nên không mất đoạn nào.
-  - **Chú thích** (`REGION_LABELS`): sơ đồ gốc không có chữ, nên tên đường/địa danh được vẽ đè
-    bằng divIcon khi zoom xa (`< REGION_SWAP_ZOOM = 15.75`), kèm POI nhóm Đi lại — ở tầm này
-    31 marker sẽ đè chồng nhau. Zoom gần thì ẩn nhãn, hiện đủ POI.
-  - **Zoom-out không bao giờ lộ mép nền**: canvas sơ đồ nghiêng ~15° trong khung hiển thị nên
-    vùng an toàn là hộp NỘI TIẾP hình bình hành đó (`REGION_SAFE`, tính bằng
-    `scratchpad/safebox-labels.mjs`), không phải hình bao. `minZoom` được tính động bằng
-    `map.getBoundsZoom(bounds)` theo kích thước màn hình (màn rộng → minZoom cao hơn) và
-    cập nhật lại khi `resize`; `maxBoundsViscosity: 1.0` chặn cứng không cho kéo bật ra.
+- **Bản đồ nền vùng — TỰ RENDER từ OpenStreetMap** (`scripts/fetch-osm-region.mjs` →
+  `scripts/render-basemap.mjs` → `public/map/region.webp` + `src/data/region-labels.js`):
+  phủ 12.8×13.9 km quanh La Vang ở 3.2 m/px (4000×4351px, ~650KB), phong cách bản đồ đường
+  như Google Maps nhưng dùng chất giấy kem cho liền mạch với artwork khuôn viên.
+  - **Vì sao tự render**: tile Google cấm lấy bằng URL trực tiếp; tile bên thứ ba khác thì
+    vướng chuyện cache/offline. Tự render từ OSM (ODbL) chỉ cần ghi công
+    `© OpenStreetMap contributors`, chạy offline, kiểm soát hoàn toàn phong cách + phạm vi.
+  - **Georeference chính xác north-up** — khác hẳn poster vẽ tay dùng trước đó (poster nén
+    phần bắc ~2 lần, lệch ~19°, fit toàn cục cho residual 600–1000m). Nhờ vậy mọi điểm trong
+    khung đều đặt được đúng chỗ, kể cả Cầu Trắng (trước phải bỏ vì rơi ngoài canvas 1.2km).
+  - **Tuyến chỉ dẫn**: Lê Lợi + Liên Xã (đường xe vào La Vang) vẽ đậm màu xanh như poster gốc;
+    quốc lộ theo thang màu cam của bản đồ đường. Viền đỏ khuôn viên vẽ khít lớp artwork.
+  - **Chữ KHÔNG nướng vào ảnh**: ảnh hiển thị ở tỉ lệ 0.25×–1.2× tùy zoom nên chữ nướng sẵn sẽ
+    lúc bé lúc to. Nhãn xuất ra `region-labels.js` để app vẽ bằng DOM (luôn sắc nét), lọc theo
+    `minZoom` để tránh chữ chồng chữ: thành phố luôn hiện, thị trấn từ z13.5, tên đường từ z14,
+    làng từ z14.75. Nhãn rơi vào trong khuôn viên bị bỏ (artwork đã thể hiện rõ chỗ đó).
+  - **Zoom-out không bao giờ lộ mép nền**: canvas nghiêng ~15° trong khung hiển thị nên vùng
+    an toàn là hộp NỘI TIẾP hình bình hành đó (`REGION_SAFE` ≈ 7.1×12.5 km, tính bằng
+    `scratchpad/safebox2.mjs`), không phải hình bao. `minZoom` tính động bằng
+    `map.getBoundsZoom(bounds)` theo kích thước màn hình và cập nhật khi `resize`;
+    `maxBoundsViscosity: 1.0` chặn cứng không cho kéo bật ra.
   - POI ngoài khuôn viên lưu bằng uv ngoài [0,1] (phép affine ngoại suy được): Điểm đón trả
-    khách (tọa độ OSM thật), Bãi đỗ xe khách (từ sơ đồ qua fit — chưa có ground truth, đo
-    thực địa rồi chỉnh bằng `?editpoi=1`). KHÔNG đặt POI Cầu Trắng: vị trí thật của nó nằm
-    ngoài canvas sơ đồ 1.2km (do phần bắc bị nén) — marker sẽ trôi giữa nền trống.
+    khách (tọa độ OSM thật), Bãi đỗ xe khách (chưa có ground truth OSM — đo thực địa rồi chỉnh
+    bằng `?editpoi=1`). Dưới `REGION_SWAP_ZOOM = 15.75` chỉ giữ POI nhóm Đi lại vì 31 marker
+    ở tầm nhìn vùng sẽ đè chồng nhau.
   - Chỉ đường tới điểm ngoài mặt nạ lối đi → đường chim bay nét đứt + ghi chú, không giả vờ
     biết lối đi thật.
 - **POI** lưu theo tọa độ ảnh `(u, v) ∈ [0,1]` trong `src/data/pois.js` — bám vào ảnh, không phụ thuộc calibration.
@@ -106,13 +107,22 @@ Tương tự, chip lọc nằm trên bản đồ phải chồng lớp tint lên 
 
 ## Lưu ý bản quyền
 
-Mọi ảnh nền người dùng nhìn thấy đều là **tài sản của dự án** (artwork khuôn viên + sơ đồ vùng),
-không cache tile của bên thứ ba — nên không vướng giấy phép và chạy được offline.
+Không dùng tile của bên thứ ba nào trong bản người dùng thấy:
+
+- **Artwork khuôn viên** — tài sản của dự án.
+- **Bản đồ nền vùng** — tự render từ dữ liệu **OpenStreetMap** (ODbL). Ảnh render ra là
+  *Produced Work* theo ODbL nên chỉ cần **ghi công** `© OpenStreetMap contributors` — dòng này
+  hiển thị ở góc dưới bản đồ và **là bắt buộc, đừng xoá**.
+- **Không dùng tile Google** vì lấy bằng URL trực tiếp là vi phạm điều khoản của Google.
 
 Ngoại lệ duy nhất: chế độ debug `?calibrate=1` nạp **tile sống Esri World Imagery** làm lớp tham
 chiếu để căn ảnh. Đây là cách dùng tile tiêu chuẩn (không lưu lại, không phát hành lại) và người
-dùng cuối không bao giờ thấy màn này. Không dùng tile Google vì lấy bằng URL trực tiếp là vi phạm
-điều khoản của Google.
+dùng cuối không bao giờ thấy màn này.
+
+Cập nhật bản đồ nền khi OSM có dữ liệu mới:
+```bash
+node scripts/fetch-osm-region.mjs && node scripts/render-basemap.mjs
+```
 
 ## Lưu ý độ chính xác
 
