@@ -75,7 +75,6 @@ const C = {
   arrowRed: '#ff3ea5',      // mũi tên hồng trên tuyến đỏ
   parking: '#e59331', parkingEdge: '#b4600f',
   junction: '#ffe000', junctionEdge: '#7a5b00',
-  campusEdge: '#c62828',
 }
 
 const ROAD_CLASSES = [
@@ -212,12 +211,6 @@ const junctionDots = JUNCTIONS.map(([lat, lng]) => {
   return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="13" fill="${C.junction}" stroke="${C.junctionEdge}" stroke-width="3.5"/>`
 }).join('')
 
-// ---- Viền khuôn viên ----
-const p1 = px(CAL.topleft[1], CAL.topleft[0])
-const p2 = px(CAL.topright[1], CAL.topright[0])
-const p3 = px(CAL.bottomleft[1], CAL.bottomleft[0])
-const c4 = [p1, p2, [p2[0] + p3[0] - p1[0], p2[1] + p3[1] - p1[1]], p3]
-
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
 <rect width="${W}" height="${H}" fill="${C.land}"/>
 ${fillLayer(areas.farmland, C.farmland)}
@@ -237,7 +230,6 @@ ${strokeLayer(routeGreenPts.map((p) => d(p, false)), '#ffffff', 15)}
 ${strokeLayer(routeGreenPts.map((p) => d(p, false)), C.routeGreen, 9)}
 ${arrowsRed}
 ${arrowsGreen}
-<path d="${d(c4, true)}" fill="none" stroke="${C.campusEdge}" stroke-width="5"/>
 ${junctionDots}
 </svg>`
 
