@@ -68,8 +68,14 @@ Tương tự, chip lọc nằm trên bản đồ phải chồng lớp tint lên 
   - **Georeference chính xác north-up** — khác hẳn poster vẽ tay dùng trước đó (poster nén
     phần bắc ~2 lần, lệch ~19°, fit toàn cục cho residual 600–1000m). Nhờ vậy mọi điểm trong
     khung đều đặt được đúng chỗ, kể cả Cầu Trắng (trước phải bỏ vì rơi ngoài canvas 1.2km).
-  - **Tuyến chỉ dẫn**: Lê Lợi + Liên Xã (đường xe vào La Vang) vẽ đậm màu xanh như poster gốc;
-    quốc lộ theo thang màu cam của bản đồ đường. Viền đỏ khuôn viên vẽ khít lớp artwork.
+  - **Lớp chỉ dẫn tái hiện đúng poster**: QL 1A / Lê Duẩn tô đỏ kèm mũi tên hồng, Lê Lợi +
+    Liên Xã tô xanh kèm mũi tên chiều một chiều, chấm vàng ở 4 giao lộ, ô cam bãi đỗ xe,
+    viền đỏ khuôn viên. Vòng lưu thông đọc từ poster: QL 1A đi về tây bắc lên Cầu Trắng →
+    Lê Lợi xuôi nam (một chiều) → La Vang → Liên Xã sang đông (một chiều) → nhập lại QL 1A.
+  - ⚠️ **Tuyến xanh phải chỉ định bằng way ID, không lọc theo tên**: OSM có hai đường cùng tên
+    "Lê Lợi" (đường hành hương ở nam và một đường khác trong thị xã Quảng Trị cách 3km), và
+    "Liên Xã" còn có nhánh tây mà poster không tô. Cầu Trắng = giao Lê Lợi × Quốc lộ 1
+    (node 3208793351, 16.740095/107.192115) — KHÔNG phải giao với đường Lê Lợi trong thị xã.
   - **Chữ KHÔNG nướng vào ảnh**: ảnh hiển thị ở tỉ lệ 0.25×–1.2× tùy zoom nên chữ nướng sẵn sẽ
     lúc bé lúc to. Nhãn xuất ra `region-labels.js` để app vẽ bằng DOM (luôn sắc nét), lọc theo
     `minZoom` để tránh chữ chồng chữ: thành phố luôn hiện, thị trấn từ z13.5, tên đường từ z14,

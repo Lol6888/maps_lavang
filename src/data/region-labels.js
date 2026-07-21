@@ -1,6 +1,6 @@
 // TỰ SINH bởi scripts/render-basemap.mjs — đừng sửa tay.
 // Nhãn vẽ bằng DOM (không nướng vào ảnh) để chữ luôn sắc nét ở mọi mức zoom.
-// Nguồn: © OpenStreetMap contributors (ODbL).
+// Nguồn địa danh/đường: © OpenStreetMap contributors (ODbL).
 export const REGION_BOUNDS = {
   topleft: [16.78, 107.14],
   topright: [16.78, 107.26],
@@ -149,13 +149,6 @@ export const OSM_LABELS = [
   "minZoom": 14.75
  },
  {
-  "text": "Trường Thọ",
-  "kind": "village",
-  "lat": 16.669781,
-  "lng": 107.258845,
-  "minZoom": 14.75
- },
- {
   "text": "Tân Chính",
   "kind": "village",
   "lat": 16.678149,
@@ -181,13 +174,6 @@ export const OSM_LABELS = [
   "kind": "village",
   "lat": 16.689318,
   "lng": 107.225319,
-  "minZoom": 14.75
- },
- {
-  "text": "thôn 1",
-  "kind": "village",
-  "lat": 16.707123,
-  "lng": 107.256288,
   "minZoom": 14.75
  },
  {
@@ -233,13 +219,6 @@ export const OSM_LABELS = [
   "minZoom": 13.5
  },
  {
-  "text": "Diên Sanh",
-  "kind": "town",
-  "lat": 16.688136,
-  "lng": 107.256045,
-  "minZoom": 13.5
- },
- {
   "text": "Hải Lăng",
   "kind": "town",
   "lat": 16.722924,
@@ -247,52 +226,94 @@ export const OSM_LABELS = [
   "minZoom": 13.5
  },
  {
-  "text": "Ái Tử",
-  "kind": "town",
-  "lat": 16.774877,
-  "lng": 107.140217,
+  "text": "Đ. LÊ LỢI",
+  "kind": "road",
+  "lat": 16.736469,
+  "lng": 107.191052,
+  "minZoom": 14
+ },
+ {
+  "text": "Đ. LÊ LỢI",
+  "kind": "road",
+  "lat": 16.721458,
+  "lng": 107.192689,
+  "minZoom": 14
+ },
+ {
+  "text": "Đ. LIÊN XÃ",
+  "kind": "road",
+  "lat": 16.712472,
+  "lng": 107.201116,
+  "minZoom": 14
+ },
+ {
+  "text": "Đ. LÊ DUẨN",
+  "kind": "road",
+  "lat": 16.740396,
+  "lng": 107.185282,
+  "minZoom": 14
+ },
+ {
+  "text": "QL 1A",
+  "kind": "shield",
+  "lat": 16.692592,
+  "lng": 107.239647,
   "minZoom": 13.5
  },
  {
-  "text": "Quốc lộ 1",
-  "kind": "road",
-  "lat": 16.684941,
-  "lng": 107.250996,
-  "minZoom": 14
+  "text": "QL 1A",
+  "kind": "shield",
+  "lat": 16.733127,
+  "lng": 107.202926,
+  "minZoom": 13.5
  },
  {
-  "text": "Quốc lộ 49C",
-  "kind": "road",
-  "lat": 16.783355,
-  "lng": 107.181523,
-  "minZoom": 14
+  "text": "QL 1A",
+  "kind": "shield",
+  "lat": 16.756242,
+  "lng": 107.177205,
+  "minZoom": 13.5
  },
  {
-  "text": "Lê Duẩn",
-  "kind": "road",
-  "lat": 16.775472,
-  "lng": 107.15925,
-  "minZoom": 14
+  "text": "ĐƯỜNG MỘT CHIỀU",
+  "kind": "oneway",
+  "lat": 16.733353,
+  "lng": 107.190881,
+  "minZoom": 14.25
  },
  {
-  "text": "Lê Lợi",
-  "kind": "road",
-  "lat": 16.724198,
-  "lng": 107.193314,
-  "minZoom": 14
+  "text": "ĐƯỜNG MỘT CHIỀU",
+  "kind": "oneway",
+  "lat": 16.712874,
+  "lng": 107.202141,
+  "minZoom": 14.25
  },
  {
-  "text": "Liên Xã",
-  "kind": "road",
-  "lat": 16.712926,
-  "lng": 107.202293,
-  "minZoom": 14
+  "text": "SÔNG THẠCH HÃN",
+  "kind": "river",
+  "lat": 16.732043,
+  "lng": 107.179171,
+  "minZoom": 13.5
  },
  {
-  "text": "Đường tỉnh 579",
-  "kind": "road",
-  "lat": 16.746975,
-  "lng": 107.11899,
+  "text": "CẦU TRẮNG",
+  "kind": "place",
+  "lat": 16.740095,
+  "lng": 107.192115,
+  "minZoom": 13.5
+ },
+ {
+  "text": "ĐIỂM ĐÓN TRẢ KHÁCH",
+  "kind": "place",
+  "lat": 16.710181,
+  "lng": 107.194709,
+  "minZoom": 14.5
+ },
+ {
+  "text": "BÃI ĐỖ XE KHÁCH",
+  "kind": "place",
+  "lat": 16.712665,
+  "lng": 107.206108,
   "minZoom": 14
  }
 ]

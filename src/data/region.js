@@ -25,9 +25,6 @@ export const REGION_SAFE = { u0: -9.94, u1: 8.14, v0: -7.04, v1: 10.92 }
 // Nhãn vẽ bằng DOM (không nướng vào ảnh) nên luôn sắc nét ở mọi mức zoom.
 // minZoom = mức zoom tối thiểu để nhãn hiện ra, tránh chữ chồng chữ khi nhìn xa.
 export const REGION_LABELS = [
-  { text: 'Trung tâm Thánh Mẫu La Vang', kind: 'shrine', u: 0.5, v: 1.16, minZoom: 0 },
-  // Mốc rẽ trên đường vào — nay đặt được đúng vị trí thật vì nền đã chuẩn hình học
-  // (poster vẽ tay trước đây nén phần bắc nên Cầu Trắng rơi ngoài canvas 1.2km)
-  { text: 'Cầu Trắng', kind: 'town', lat: 16.76611, lng: 107.16812, minZoom: 13.5 },
+  { text: 'TRUNG TÂM THÁNH MẪU LA VANG', kind: 'shrine', u: 0.5, v: 1.16, minZoom: 0 },
   ...OSM_LABELS,
 ]
