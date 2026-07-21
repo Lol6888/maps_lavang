@@ -66,23 +66,24 @@ Tương tự, chip lọc nằm trên bản đồ phải chồng lớp tint lên 
   fit theo 2 neo gần khuôn viên (Lê Lợi×Liên Xã node 3100290389 + đầu đông Liên Xã node
   1021092494; scale 2.058 m/px, xoay 1.03°) — GPS chính xác ở vành đai đỗ xe/đi bộ vào,
   phần bắc chỉ minh họa. Xem thêm chú thích trong `src/data/region.js`.
-  - **Chuyển lớp theo zoom** (`REGION_SWAP_ZOOM = 15.75`): zoom gần = artwork khuôn viên +
-    vệ tinh + đủ POI; zoom xa = chỉ sơ đồ vùng (hình dán khuôn viên trong sơ đồ làm đại diện —
-    hình dán bị vẽ to ~2 lần nên không thể đè artwork chuẩn lên, sẽ thành hai khuôn viên lệch
-    nhau) + POI nhóm Đi lại. `minZoom` 13.5, maxBounds theo canvas sơ đồ.
+  - **Hình dán khuôn viên trong sơ đồ bị XÓA** khi build asset (`scripts/gen-region.mjs`):
+    nó bị vẽ to gấp ~2 lần và xoay ~5° thay vì 14.4°, nên nếu giữ thì viền đỏ của nó lòi ra
+    quanh lớp artwork đã georeference chuẩn thành "hai khuôn viên lệch nhau". Vùng xóa tô lại
+    bằng màu giấy nền; các tuyến đường đều kết thúc ở rìa khuôn viên nên không mất đoạn nào.
+  - **Chú thích** (`REGION_LABELS`): sơ đồ gốc không có chữ, nên tên đường/địa danh được vẽ đè
+    bằng divIcon khi zoom xa (`< REGION_SWAP_ZOOM = 15.75`), kèm POI nhóm Đi lại — ở tầm này
+    31 marker sẽ đè chồng nhau. Zoom gần thì ẩn nhãn, hiện đủ POI.
+  - **Zoom-out không bao giờ lộ mép nền**: canvas sơ đồ nghiêng ~15° trong khung hiển thị nên
+    vùng an toàn là hộp NỘI TIẾP hình bình hành đó (`REGION_SAFE`, tính bằng
+    `scratchpad/safebox-labels.mjs`), không phải hình bao. `minZoom` được tính động bằng
+    `map.getBoundsZoom(bounds)` theo kích thước màn hình (màn rộng → minZoom cao hơn) và
+    cập nhật lại khi `resize`; `maxBoundsViscosity: 1.0` chặn cứng không cho kéo bật ra.
   - POI ngoài khuôn viên lưu bằng uv ngoài [0,1] (phép affine ngoại suy được): Điểm đón trả
     khách (tọa độ OSM thật), Bãi đỗ xe khách (từ sơ đồ qua fit — chưa có ground truth, đo
     thực địa rồi chỉnh bằng `?editpoi=1`). KHÔNG đặt POI Cầu Trắng: vị trí thật của nó nằm
     ngoài canvas sơ đồ 1.2km (do phần bắc bị nén) — marker sẽ trôi giữa nền trống.
   - Chỉ đường tới điểm ngoài mặt nạ lối đi → đường chim bay nét đứt + ghi chú, không giả vờ
     biết lối đi thật.
-- **Ảnh vệ tinh nền** (`scripts/gen-backdrop.mjs` → `public/map/backdrop.webp` + `src/data/backdrop.js`):
-  vùng 2800×2800m quanh khuôn viên, ghép từ tile **Esri World Imagery** ở zoom 16 (~2.3 m/px, 210KB).
-  Không dùng tile sống vì chế độ thường xoay bản đồ campus-up còn tile luôn hướng Bắc — sẽ lệch ~194°.
-  Ảnh tĩnh được đặt qua đúng phép biến đổi thật→hiển thị nên xoay khớp artwork, và chạy được offline.
-  `minZoom` 15.75 và giới hạn pan ±900m×±1150m giữ khung hình luôn nằm trong vùng an toàn của ảnh nền
-  (ảnh nền là hình vuông bị xoay nên vùng an toàn nhỏ hơn hình bao của nó).
-  Nguồn ảnh phải được ghi công trên giao diện — xem lưu ý bản quyền bên dưới.
 - **POI** lưu theo tọa độ ảnh `(u, v) ∈ [0,1]` trong `src/data/pois.js` — bám vào ảnh, không phụ thuộc calibration.
 - **GPS** (`src/hooks/useGeolocation.js`): `watchPosition` + `enableHighAccuracy`, bỏ qua fix có accuracy > 30m (chỉ làm mờ marker), deadzone 2m, làm mượt EMA, vòng tròn accuracy, heading khi đang di chuyển.
 - **Chỉ đường** (`src/map/router.js` + `src/data/walkmask.js`): mặt nạ lối đi bộ được **trích tự động từ chính ảnh bản đồ** — lối lát gạch trong khuôn viên là màu be ấm (`sat 0.05–0.32`, `r−b 12–48`), còn vùng ngoài khuôn viên trong ảnh là xám thật nên bị loại; sau đó lấy thành phần liên thông lớn nhất (lưới 320×569, mỗi ô ~1.2m). A* 8 hướng cấm cắt góc chéo, rút gọn bằng line-of-sight.
@@ -103,19 +104,15 @@ Tương tự, chip lọc nằm trên bản đồ phải chồng lớp tint lên 
 - `assets-src/` — ảnh gốc độ phân giải đầy đủ (2 lớp: có cây / không cây) + ảnh tham chiếu vị trí POI.
 - `public/map/` — bản downscale 2048/4096px cho web (tạo bằng ffmpeg).
 
-## Lưu ý bản quyền ảnh vệ tinh
+## Lưu ý bản quyền
 
-Ảnh nền lấy từ **Esri World Imagery**, KHÔNG phải Google Maps — lấy tile Google bằng URL
-trực tiếp là vi phạm điều khoản của Google.
+Mọi ảnh nền người dùng nhìn thấy đều là **tài sản của dự án** (artwork khuôn viên + sơ đồ vùng),
+không cache tile của bên thứ ba — nên không vướng giấy phép và chạy được offline.
 
-App đang **lưu sẵn (cache) tile Esri vào repo** dưới dạng một ảnh tĩnh. Dùng tile sống kèm ghi công
-là cách dùng phổ thông và rõ ràng được phép; còn xuất/lưu tile ra file thì Esri có dịch vụ riêng
-cho việc đó (*World Imagery (for Export)*). **Trước khi phát hành chính thức nên kiểm tra lại điều khoản
-hoặc đổi sang nguồn có giấy phép dứt khoát** (ví dụ ESA Sentinel-2 cloudless, CC BY 4.0) — chỉ cần
-đổi `URL` trong `scripts/gen-backdrop.mjs` rồi chạy lại, phần còn lại không phải sửa.
-
-Dòng ghi công `Ảnh vệ tinh: Esri, Maxar, Earthstar Geographics` hiển thị ở góc dưới bản đồ và
-là bắt buộc — đừng xoá.
+Ngoại lệ duy nhất: chế độ debug `?calibrate=1` nạp **tile sống Esri World Imagery** làm lớp tham
+chiếu để căn ảnh. Đây là cách dùng tile tiêu chuẩn (không lưu lại, không phát hành lại) và người
+dùng cuối không bao giờ thấy màn này. Không dùng tile Google vì lấy bằng URL trực tiếp là vi phạm
+điều khoản của Google.
 
 ## Lưu ý độ chính xác
 

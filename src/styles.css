@@ -43,6 +43,11 @@ button { font-family: inherit; }
 /* Nền trùng màu giấy kem của sơ đồ vùng để mép canvas không lộ */
 .map-root { position: absolute; inset: 0; background: #fffdea; z-index: 0; }
 
+/* Leaflet chỉ đặt user-select:none cho tile/marker chứ không cho container, nên
+   kéo bản đồ sẽ bôi đen cả trang; iOS giữ lâu lại hiện menu "Lưu ảnh". */
+.leaflet-container { user-select: none; -webkit-user-select: none; }
+.leaflet-container img { -webkit-user-drag: none; -webkit-touch-callout: none; }
+
 /* ============ Màn hình chọn địa điểm ============ */
 .home {
   height: 100%; overflow-y: auto; background: var(--paper);
@@ -249,14 +254,24 @@ button { font-family: inherit; }
 .fab:active { background: var(--g-hover); }
 .fab-on { color: var(--g-blue); }
 
-/* Ghi công nguồn ảnh vệ tinh (bắt buộc theo điều khoản Esri) */
-.attribution {
-  position: absolute; left: 6px; z-index: 400;
-  bottom: calc(4px + env(safe-area-inset-bottom));
-  background: rgba(255,255,255,.75); border-radius: 3px;
-  padding: 2px 6px; font-size: 10px; color: var(--g-text-2);
+/* Nhãn chú thích vẽ đè lên sơ đồ vùng khi zoom xa (sơ đồ gốc không có chữ).
+   Viền trắng quanh chữ để đọc được trên mọi nền của sơ đồ. */
+.region-label {
+  font-size: 11px; font-weight: 700; letter-spacing: .3px;
+  text-align: center; line-height: 1.25; white-space: nowrap;
+  text-shadow:
+    -1.5px -1.5px 0 #fffdea, 1.5px -1.5px 0 #fffdea,
+    -1.5px 1.5px 0 #fffdea, 1.5px 1.5px 0 #fffdea,
+    0 0 4px #fffdea;
 }
-.app.has-sheet .attribution, .app.guiding .attribution { display: none; }
+.region-label-road { color: #b3261e; }
+.region-label-water { color: #1c6fb8; }
+.region-label-place {
+  color: #16283f; font-size: 12px;
+  padding: 3px 9px; border-radius: 11px; white-space: nowrap;
+  background: #fffdea; border: 1.5px solid #b3261e; text-shadow: none;
+  display: inline-block;
+}
 
 /* ============ Banner ============ */
 .banner {

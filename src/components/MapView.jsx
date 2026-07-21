@@ -6,8 +6,7 @@ import {
   displayCalFrom, campusBearing, realToDisplay,
 } from '../map/calibration.js'
 import { CATEGORIES } from '../data/pois.js'
-import { BACKDROP } from '../data/backdrop.js'
-import { REGION, REGION_SWAP_ZOOM } from '../data/region.js'
+import { REGION, REGION_SWAP_ZOOM, REGION_SAFE, REGION_LABELS } from '../data/region.js'
 import { iconSvg } from './Icon.jsx'
 
 const MAP_URLS = {
@@ -49,27 +48,23 @@ export default function MapView({
   const accCircleRef = useRef(null)
   const cornerMarkersRef = useRef(null)
   const routeLayerRef = useRef(null)
-  const backdropRef = useRef(null)
   const regionRef = useRef(null)
+  const labelLayerRef = useRef(null)
   const handlersRef = useRef({})
 
-  // Góc các ảnh nền (tọa độ thật) đưa sang khung đang hiển thị
-  const toDisplayCorners = (src) => {
+  // Góc sơ đồ vùng (tọa độ thật) đưa sang khung đang hiển thị
+  const regionCorners = useMemo(() => {
     const toDisplay = (ll) => {
       const { u, v } = latLngToUv(cal, ll)
       const p = uvToLatLng(frame, u, v)
       return [p.lat, p.lng]
     }
     return {
-      topleft: toDisplay(src.topleft),
-      topright: toDisplay(src.topright),
-      bottomleft: toDisplay(src.bottomleft),
+      topleft: toDisplay(REGION.topleft),
+      topright: toDisplay(REGION.topright),
+      bottomleft: toDisplay(REGION.bottomleft),
     }
-  }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const backdropCorners = useMemo(() => toDisplayCorners(BACKDROP), [cal, frame])
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const regionCorners = useMemo(() => toDisplayCorners(REGION), [cal, frame])
+  }, [cal, frame])
 
   // callbacks/props mới nhất cho các listener gắn 1 lần
   handlersRef.current = { onSelectPoi, onUserInteract, onCalChange, cal, frame, mode }
@@ -79,13 +74,13 @@ export default function MapView({
     const map = L.map(divRef.current, {
       zoomControl: false,
       attributionControl: false,
-      minZoom: 13.5,
       maxZoom: 21,
       zoomSnap: 0.25,
+      // Chặn cứng tại maxBounds — không cho kéo bật ra ngoài lộ mép nền
+      maxBoundsViscosity: 1.0,
     })
-    // Sơ đồ vùng (340) dưới vệ tinh (350), cả hai dưới ảnh bản đồ (overlayPane 400)
+    // Sơ đồ vùng nằm dưới ảnh bản đồ (overlayPane có zIndex 400)
     map.createPane('regionPane').style.zIndex = 340
-    map.createPane('backdropPane').style.zIndex = 350
     map.on('zoomend', () => setLowZoom(map.getZoom() < REGION_SWAP_ZOOM))
     map.setView(campusCenter(frame), 16.5)
     map.on('dragstart', () => handlersRef.current.onUserInteract?.())
@@ -109,8 +104,8 @@ export default function MapView({
       mapRef.current = null
       overlayRef.current = null
       satRef.current = null
-      backdropRef.current = null
       regionRef.current = null
+      labelLayerRef.current = null
       routeLayerRef.current = null
       userMarkerRef.current = null
       accCircleRef.current = null
@@ -154,31 +149,32 @@ export default function MapView({
     }
   }, [mode, regionCorners])
 
-  // ---- Ảnh vệ tinh nền (chế độ thường, chỉ khi zoom gần) ----
+  // ---- Nhãn chú thích trên sơ đồ vùng (chỉ khi zoom xa) ----
   useEffect(() => {
     const map = mapRef.current
     if (!map) return
-    if (mode === 'calibrate' || lowZoom) {
-      if (backdropRef.current) {
-        map.removeLayer(backdropRef.current)
-        backdropRef.current = null
-      }
-      return
+    if (labelLayerRef.current) {
+      map.removeLayer(labelLayerRef.current)
+      labelLayerRef.current = null
     }
-    if (!backdropRef.current) {
-      backdropRef.current = rotatedImageOverlay(
-        BACKDROP.url,
-        backdropCorners.topleft, backdropCorners.topright, backdropCorners.bottomleft,
-        { pane: 'backdropPane' }
-      ).addTo(map)
-    } else {
-      backdropRef.current.setCorners(
-        backdropCorners.topleft, backdropCorners.topright, backdropCorners.bottomleft
+    if (mode !== 'normal' || !lowZoom) return
+    labelLayerRef.current = L.layerGroup(
+      REGION_LABELS.map((lb) =>
+        L.marker(uvToLatLng(frame, lb.u, lb.v), {
+          interactive: false,
+          keyboard: false,
+          icon: L.divIcon({
+            className: '',
+            html: `<div class="region-label region-label-${lb.kind}">${lb.text}</div>`,
+            iconSize: [180, 20],
+            iconAnchor: [90, 10],
+          }),
+        })
       )
-    }
-  }, [mode, backdropCorners, lowZoom])
+    ).addTo(map)
+  }, [mode, lowZoom, frame])
 
-  // ---- Ảnh bản đồ overlay (ẩn khi zoom xa — sơ đồ vùng tự thể hiện khuôn viên) ----
+  // ---- Ảnh bản đồ khuôn viên (luôn hiện — hình dán trong sơ đồ đã bị xóa) ----
   useEffect(() => {
     const map = mapRef.current
     if (!map) return
@@ -186,14 +182,14 @@ export default function MapView({
       map.removeLayer(overlayRef.current)
       overlayRef.current = null
     }
-    if (layer !== 'none' && !(mode === 'normal' && lowZoom)) {
+    if (layer !== 'none') {
       overlayRef.current = rotatedImageOverlay(
         MAP_URLS[layer], frame.topleft, frame.topright, frame.bottomleft,
         { opacity: overlayOpacity }
       ).addTo(map)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [layer, lowZoom, mode])
+  }, [layer])
 
   // corners/opacity thay đổi → cập nhật overlay hiện có
   useEffect(() => {
@@ -208,19 +204,24 @@ export default function MapView({
     const map = mapRef.current
     if (!map) return
     if (mode === 'normal') {
-      // Cho pan tới hết sơ đồ vùng (~6.9 x 4.9 km)
-      const b = regionCorners
-      const fourth = [
-        b.topright[0] + b.bottomleft[0] - b.topleft[0],
-        b.topright[1] + b.bottomleft[1] - b.topleft[1],
-      ]
-      map.setMaxBounds(
-        L.latLngBounds([b.topleft, b.topright, b.bottomleft, fourth]).pad(0.02)
+      // Hộp an toàn nội tiếp canvas sơ đồ đã xoay: viewport luôn nằm trong nền.
+      // minZoom động theo kích thước màn hình: mức zoom nhỏ nhất mà viewport
+      // vẫn lọt trong hộp (màn hình càng rộng minZoom càng cao).
+      const bounds = L.latLngBounds(
+        uvToLatLng(frame, REGION_SAFE.u0, REGION_SAFE.v0),
+        uvToLatLng(frame, REGION_SAFE.u1, REGION_SAFE.v1)
       )
-    } else {
-      map.setMaxBounds(null)
+      const apply = () => {
+        map.setMaxBounds(bounds)
+        map.setMinZoom(map.getBoundsZoom(bounds, true))
+      }
+      apply()
+      map.on('resize', apply)
+      return () => map.off('resize', apply)
     }
-  }, [mode, regionCorners])
+    map.setMaxBounds(null)
+    map.setMinZoom(13)
+  }, [mode, frame])
 
   // ---- POI markers ----
   useEffect(() => {
