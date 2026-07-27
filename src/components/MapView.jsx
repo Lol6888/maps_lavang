@@ -303,14 +303,38 @@ export default function MapView({
     group.clearLayers()
     // Ở chế độ region chỉ hiện nhãn chỉ dẫn (đã đủ), ẩn hết marker POI cho gọn.
     const visible = lowZoom ? [] : pois
+    const map = mapRef.current
+
+    // Quyết định POI nào được kèm chữ: luôn hiện chấm, chỉ hiện title khi không đè
+    // nhãn đã đặt (ưu tiên nhóm quan trọng + điểm đang chọn). Zoom gần -> nhiều chữ.
+    const CAT_PRIO = { hanhhuong: 5, toanha: 4, hotro: 4, giaothong: 3, tienich: 2 }
+    const z = map ? map.getZoom() : 17
+    const ranked = visible
+      .map((poi) => ({ poi, prio: (poi.id === selectedPoiId ? 100 : 0) + (CAT_PRIO[poi.cat] ?? 1) }))
+      .sort((a, b) => b.prio - a.prio)
+    const tagRects = []
+    const withTag = new Set()
+    for (const { poi } of ranked) {
+      if (!map) break
+      const p = map.project(uvToLatLng(frame, poi.u, poi.v), z)
+      const w = poi.name.length * 6.4 + 44 // chấm + chữ (px)
+      // nhãn nằm bên phải chấm
+      const rect = { left: p.x - 16, right: p.x + w - 16, top: p.y - 12, bottom: p.y + 12 }
+      const hit = tagRects.some((r) =>
+        !(rect.right + 3 < r.left || rect.left - 3 > r.right || rect.bottom + 2 < r.top || rect.top - 2 > r.bottom))
+      if (!hit || poi.id === selectedPoiId) { tagRects.push(rect); withTag.add(poi.id) }
+    }
+
     for (const poi of visible) {
       const color = CATEGORIES[poi.cat]?.color || '#5f6368'
       const selected = poi.id === selectedPoiId
+      const tag = withTag.has(poi.id)
       const icon = L.divIcon({
         className: '',
-        html: `<div class="poi-marker${selected ? ' poi-selected' : ''}" style="--c:${color}">${
-          iconSvg(poi.icon, { size: selected ? 24 : 17, color: selected ? '#fff' : color })
-        }</div>`,
+        html: `<div class="poi-chip${selected ? ' sel' : ''}" style="--c:${color}">
+            <span class="poi-dot">${iconSvg(poi.icon, { size: 17, color: selected ? '#fff' : color })}</span>
+            ${tag ? `<span class="poi-tag">${poi.name}</span>` : ''}
+          </div>`,
         iconSize: [30, 30],
         iconAnchor: [15, 15],
       })
@@ -318,7 +342,7 @@ export default function MapView({
       m.on('click', () => handlersRef.current.onSelectPoi?.(poi))
       group.addLayer(m)
     }
-  }, [pois, frame, selectedPoiId, lowZoom])
+  }, [pois, frame, selectedPoiId, lowZoom, zoom])
 
   // Pan tới POI được chọn
   useEffect(() => {
