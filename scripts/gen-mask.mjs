@@ -1,22 +1,23 @@
 import sharp from 'sharp'
 import { writeFileSync } from 'node:fs'
 
-const SRC = 'G:/MAPS LAVANG/assets-src/mapnotree.webp'
+const SRC = 'G:/MAPS LAVANG/assets-src/map 24072026/map no tree.webp'
+const M_PER_PX = 0.2257 // scale ảnh mới (từ nm-fit2: new->old 4.5319 × 0.0498)
 const GW = 320 // chiều rộng lưới routing
 
-const { data, info } = await sharp(SRC).resize({ width: GW }).raw().toBuffer({ resolveWithObject: true })
+const { data, info } = await sharp(SRC).ensureAlpha().resize({ width: GW }).raw().toBuffer({ resolveWithObject: true })
 const W = info.width, H = info.height, C = info.channels
 console.log('grid', W, 'x', H, '=', W * H, 'cells')
 
-// ---- Phân loại "đi được": mặt lát be ấm trong khuôn viên ----
-// Ngoài khuôn viên là ảnh xám (sat<0.05) nên bị loại tự động.
+// ---- Phân loại "đi được" trên ảnh photographic mới ----
+// Lối đi lát gạch/bê tông: sáng, ít bão hòa, KHÔNG xanh cỏ, KHÔNG xanh nước.
+// Vùng trong suốt (bleed ngoài khuôn viên) bị loại theo alpha.
 const walk = new Uint8Array(W * H)
 for (let i = 0; i < W * H; i++) {
-  const r = data[i * C], g = data[i * C + 1], b = data[i * C + 2]
+  const r = data[i * C], g = data[i * C + 1], b = data[i * C + 2], a = data[i * C + 3]
   const mx = Math.max(r, g, b), mn = Math.min(r, g, b)
   const sat = mx === 0 ? 0 : (mx - mn) / mx
-  const rb = r - b
-  walk[i] = mx >= 140 && sat >= 0.05 && sat <= 0.32 && rb >= 12 && rb <= 48 ? 1 : 0
+  walk[i] = a > 128 && mx >= 150 && sat <= 0.26 && (g - r) < 14 && (b - r) < 20 ? 1 : 0
 }
 console.log('sau phân loại:', count(walk))
 
@@ -57,8 +58,8 @@ const b64 = Buffer.from(bytes).toString('base64')
 console.log('mask base64:', b64.length, 'bytes')
 
 writeFileSync('G:/MAPS LAVANG/src/data/walkmask.js',
-`// Mặt nạ lối đi bộ, sinh tự động từ assets-src/mapnotree.webp (xem scratchpad/gen-mask.mjs).
-// Lưới ${W}x${H} phủ toàn ảnh; mỗi ô ~${(7843 / W * 0.0498).toFixed(2)}m. Bit 1 = đi được.
+`// Mặt nạ lối đi bộ, sinh tự động từ "map no tree" (xem scripts/gen-mask.mjs).
+// Lưới ${W}x${H} phủ toàn ảnh; mỗi ô ~${(2302 / W * M_PER_PX).toFixed(2)}m. Bit 1 = đi được.
 // Phân loại theo màu mặt lát be ấm, giữ thành phần liên thông lớn nhất.
 export const MASK_W = ${W}
 export const MASK_H = ${H}
@@ -79,7 +80,7 @@ export function getWalkMask() {
 
 // ---- Ảnh kiểm chứng: mask đỏ chồng lên bản đồ ----
 const VW = 640
-const base = await sharp(SRC).resize({ width: VW }).toBuffer()
+const base = await sharp(SRC).ensureAlpha().flatten({ background: '#3a3a3a' }).resize({ width: VW }).toBuffer()
 const meta = await sharp(base).metadata()
 const ov = Buffer.alloc(meta.width * meta.height * 4)
 for (let y = 0; y < meta.height; y++) {
@@ -92,7 +93,7 @@ for (let y = 0; y < meta.height; y++) {
 await sharp(base)
   .composite([{ input: ov, raw: { width: meta.width, height: meta.height, channels: 4 } }])
   .png()
-  .toFile(new URL('./mask-check.png', import.meta.url).pathname.slice(1))
+  .toFile('scripts/mask-check.png')
 console.log('đã ghi mask-check.png')
 
 function count(a) { let n = 0; for (const v of a) n += v; return n }

@@ -4,15 +4,16 @@ import L from 'leaflet'
 // Ảnh được neo bằng 3 điểm: góc trên-trái, trên-phải, dưới-trái (theo ảnh gốc).
 // Chỉnh trong chế độ ?calibrate=1 rồi dán JSON xuất ra vào DEFAULT_CALIBRATION.
 
-export const IMAGE_SIZE = { width: 7843, height: 13934 }
+export const IMAGE_SIZE = { width: 2302, height: 3368 }
 
-// Kết quả georeference từ 3 điểm neo OSM (basilica, tháp chuông, hồ trái),
-// fit similarity (scale 0.0498 m/px, xoay ~14.4° so với Bắc), residual ≤ 2.1m.
-// Validate với 5 điểm OSM độc lập, sai số ≤ ~7m. Xem scratchpad fit-cal.mjs.
+// Ảnh nội khu mới (assets-src/map 24072026). Georeference bằng cách khớp 3 đặc
+// trưng (mái basilica + 2 hồ) với ảnh cũ (fit similarity residual ≤ 1.0m) rồi
+// chuyển qua calibration cũ (đã fit từ OSM, residual ≤ 2.1m). Xem scratchpad
+// nm-fit2.mjs + nm-cal.mjs.
 export const DEFAULT_CALIBRATION = {
-  topleft: [16.7049431, 107.198059],
-  topright: [16.7040609, 107.1945134],
-  bottomleft: [16.7110141, 107.1964329],
+  topleft: [16.7044956, 107.1987944],
+  topright: [16.7033275, 107.1940767],
+  bottomleft: [16.7111479, 107.1970214],
 }
 
 const LS_KEY = 'lavang-calibration'

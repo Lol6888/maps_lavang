@@ -1,11 +1,8 @@
-// POI lưu theo tọa độ ảnh (u,v ∈ [0,1], gốc trên-trái) — bám vào ảnh bản đồ,
-// không phụ thuộc kết quả calibrate. Chỉnh vị trí bằng chế độ ?editpoi=1 (click để lấy u,v).
-// Vị trí ban đầu ước lượng từ ảnh nhãn assets-src/poi-reference.jpeg.
+// POI lưu theo tọa độ ảnh (u,v ∈ [0,1], gốc trên-trái) của ảnh nội khu mới
+// (assets-src/map 24072026, 2302×3368). Vị trí đo trực tiếp từ chấm marker trên
+// "map label.webp" (scripts scratchpad nm-newdots/nm-orange), sai số dưới 1 dot.
 // icon: tên trong src/components/iconPaths.js (Material Design).
 
-// Bảng màu trầm, hòa với trang bìa (navy #0d1f38 + vàng kim) thay vì bảng màu
-// rực của Google. Cả 4 màu đều đủ tối để icon trắng và chữ trên nền trắng đạt
-// tương phản AA, và đều nổi trên ảnh vệ tinh khi làm marker.
 export const CATEGORIES = {
   hanhhuong: { label: 'Hành hương', color: '#7d6029', icon: 'Church' },       // vàng kim
   tienich: { label: 'Tiện ích', color: '#3f5c78', icon: 'LocalDrink' },       // lam đá
@@ -16,51 +13,56 @@ export const CATEGORIES = {
 
 export const POIS = [
   // --- Hành hương ---
-  { id: 'duc-me-suoi', name: 'Đức Mẹ Suối', icon: 'Water', cat: 'hanhhuong', u: 0.577, v: 0.019 },
-  { id: 'vuong-cung-thanh-duong', name: 'Vương Cung Thánh Đường', icon: 'Church', cat: 'hanhhuong', u: 0.547, v: 0.164 },
-  { id: 'linh-dai', name: 'Linh đài Đức Mẹ La Vang', icon: 'Church', cat: 'hanhhuong', u: 0.329, v: 0.436 },
-  { id: 'thap-co', name: 'Tháp cổ', icon: 'AccountBalance', cat: 'hanhhuong', u: 0.53, v: 0.4146 },
-  { id: 'tuong-dai-tu-dao', name: 'Tượng đài các thánh tử đạo', icon: 'AccountBalance', cat: 'hanhhuong', u: 0.178, v: 0.437 },
-  { id: 'nha-nguyen', name: 'Nhà Nguyện', icon: 'Church', cat: 'hanhhuong', u: 0.341, v: 0.497 },
-  { id: 'gieng-nuoc', name: 'Giếng Nước Đức Mẹ', icon: 'WaterDrop', cat: 'hanhhuong', u: 0.439, v: 0.507 },
-  { id: 'khu-giai-toi', name: 'Khu vực Giải Tội', icon: 'VolunteerActivism', cat: 'hanhhuong', u: 0.322, v: 0.812 },
+  { id: 'duc-me-suoi', name: 'Đức Mẹ Suối', icon: 'Water', cat: 'hanhhuong', u: 0.5381, v: 0.1227 },
+  { id: 'vuong-cung-thanh-duong', name: 'Vương Cung Thánh Đường', icon: 'Church', cat: 'hanhhuong', u: 0.528, v: 0.3024 },
+  { id: 'khu-tu-dao', name: 'Khu các thánh tử đạo', icon: 'AccountBalance', cat: 'hanhhuong', u: 0.236, v: 0.4914 },
+  { id: 'linh-dai', name: 'Linh đài', icon: 'Church', cat: 'hanhhuong', u: 0.3445, v: 0.4898 },
+  { id: 'nha-chau-thanh-the', name: 'Nhà Chầu Thánh Thể', icon: 'Church', cat: 'hanhhuong', u: 0.3015, v: 0.5212 },
+  { id: 'thap-co', name: 'Tháp cổ', icon: 'AccountBalance', cat: 'hanhhuong', u: 0.524, v: 0.4599 },
+  { id: 'nha-nguyen', name: 'Nhà nguyện', icon: 'Church', cat: 'hanhhuong', u: 0.3726, v: 0.547 },
+  { id: 'gieng-duc-me', name: 'Giếng Đức Mẹ', icon: 'WaterDrop', cat: 'hanhhuong', u: 0.4439, v: 0.5482 },
+  { id: 'duc-me-ban-on', name: 'Đức Mẹ Ban Ơn', icon: 'Church', cat: 'hanhhuong', u: 0.5892, v: 0.5446 },
+  { id: 'khu-giai-toi', name: 'Khu giải tội', icon: 'VolunteerActivism', cat: 'hanhhuong', u: 0.3092, v: 0.8231 },
 
   // --- Tòa nhà & khu vực ---
-  { id: 'cong-chinh', name: 'Cổng chính', icon: 'DoorFront', cat: 'toanha', u: 0.509, v: 0.914 },
-  { id: 'nha-trung-tam', name: 'Nhà trung tâm', icon: 'Domain', cat: 'toanha', u: 0.824, v: 0.37 },
-  { id: 'nha-hanh-huong', name: 'Nhà hành hương', icon: 'Hotel', cat: 'toanha', u: 0.872, v: 0.476 },
-  { id: 'khu-gioi-tre', name: 'Khu vực giới trẻ', icon: 'Groups', cat: 'toanha', u: 0.72, v: 0.814 },
-  { id: 'nha-tien-che-trai', name: 'Nhà tiền chế (trái)', icon: 'NightShelter', cat: 'toanha', u: 0.167, v: 0.619 },
-  { id: 'nha-tien-che-phai', name: 'Nhà tiền chế (phải)', icon: 'NightShelter', cat: 'toanha', u: 0.861, v: 0.622 },
+  { id: 'nha-trung-tam', name: 'Nhà trung tâm', icon: 'Domain', cat: 'toanha', u: 0.7972, v: 0.4256 },
+  { id: 'nha-hanh-huong', name: 'Nhà hành hương', icon: 'Hotel', cat: 'toanha', u: 0.7598, v: 0.535 },
+  { id: 'nha-tien-che-1', name: 'Nhà tiền chế 1', icon: 'NightShelter', cat: 'toanha', u: 0.7691, v: 0.6923 },
+  { id: 'nha-tien-che-2', name: 'Nhà tiền chế 2', icon: 'NightShelter', cat: 'toanha', u: 0.2471, v: 0.6827 },
+  { id: 'dao-gioi-tre', name: 'Đảo giới trẻ', icon: 'Groups', cat: 'toanha', u: 0.6835, v: 0.8134 },
+  { id: 'cong-phu-1', name: 'Cổng phụ 1', icon: 'DoorFront', cat: 'toanha', u: 0.2331, v: 0.5634 },
+  { id: 'cong-phu-2', name: 'Cổng phụ 2', icon: 'DoorFront', cat: 'toanha', u: 0.7831, v: 0.573 },
+  { id: 'cong-phu-3', name: 'Cổng phụ 3', icon: 'DoorFront', cat: 'toanha', u: 0.7879, v: 0.371 },
+  { id: 'cong-phu-4', name: 'Cổng phụ 4', icon: 'DoorFront', cat: 'toanha', u: 0.2454, v: 0.365 },
 
-  // --- Hỗ trợ ---
-  { id: 'ban-tiep-tan', name: 'Ban tiếp tân', icon: 'Info', cat: 'hotro', u: 0.778, v: 0.425 },
-  { id: 'trai-trat-tu', name: 'Trại trật tự trung tâm', icon: 'Shield', cat: 'hotro', u: 0.677, v: 0.5 },
-  { id: 'ban-y-te', name: 'Ban y tế', icon: 'LocalHospital', cat: 'hotro', u: 0.824, v: 0.547 },
+  // --- Hỗ trợ & y tế ---
+  { id: 'trai-trat-tu', name: 'Trại trật tự trung tâm', icon: 'Shield', cat: 'hotro', u: 0.6695, v: 0.5482 },
+  { id: 'trai-y-te', name: 'Trại y tế', icon: 'LocalHospital', cat: 'hotro', u: 0.7457, v: 0.6066 },
 
-  // --- Tiện ích: toilet ---
-  { id: 'toilet-tl', name: 'Toilet (gần Thánh Đường, trái)', icon: 'Wc', cat: 'tienich', u: 0.13, v: 0.257 },
-  { id: 'toilet-tr', name: 'Toilet (gần Thánh Đường, phải)', icon: 'Wc', cat: 'tienich', u: 0.91, v: 0.256 },
-  { id: 'toilet-r1', name: 'Toilet (khu nhà hành hương)', icon: 'Wc', cat: 'tienich', u: 0.929, v: 0.4225 },
-  { id: 'toilet-r2', name: 'Toilet (gần ban y tế)', icon: 'Wc', cat: 'tienich', u: 0.929, v: 0.564 },
-  { id: 'toilet-l', name: 'Toilet (khu trại, trái)', icon: 'Wc', cat: 'tienich', u: 0.122, v: 0.605 },
-
-  // --- Tiện ích: nước & thức ăn ---
-  // WaterDrop dành cho nước thánh; nước uống dùng LocalDrink cho khỏi lẫn
-  { id: 'phat-nuoc-thuc-an', name: 'Điểm phát nước và thức ăn', icon: 'Restaurant', cat: 'tienich', u: 0.672, v: 0.586 },
-  { id: 'phat-nuoc-trai', name: 'Điểm phát nước (khu trại trái)', icon: 'LocalDrink', cat: 'tienich', u: 0.408, v: 0.691 },
-  { id: 'phat-nuoc-dao', name: 'Điểm phát nước (đảo trái)', icon: 'LocalDrink', cat: 'tienich', u: 0.292, v: 0.849 },
-  { id: 'phat-nuoc-giua', name: 'Điểm phát nước (trục chính)', icon: 'LocalDrink', cat: 'tienich', u: 0.533, v: 0.831 },
-
-  // --- Đi lại & đỗ xe (ngoài khuôn viên — uv ngoài [0,1] là bình thường) ---
-  // diem-don-tra: giao Lê Lợi × Liên Xã, tọa độ thật từ OSM (node 3100290389).
-  // bai-do-xe: từ sơ đồ vùng qua fit 2 neo (hành lang Liên Xã tin cậy) — chưa có
-  // ground truth OSM, nên đo thực địa rồi chỉnh lại bằng ?editpoi=1 khi có dịp.
-  { id: 'diem-don-tra', name: 'Điểm đón trả khách', icon: 'DirectionsBus', cat: 'giaothong', u: 0.5148, v: 0.9376 },
-  { id: 'bai-do-xe', name: 'Bãi đỗ xe khách', icon: 'LocalParking', cat: 'giaothong', u: -2.6751, v: 0.8833 },
+  // --- Tiện ích: nhà vệ sinh ---
+  { id: 'nha-ve-sinh-1', name: 'Nhà vệ sinh 1', icon: 'Wc', cat: 'tienich', u: 0.219, v: 0.6354 },
+  { id: 'nha-ve-sinh-2', name: 'Nhà vệ sinh 2', icon: 'Wc', cat: 'tienich', u: 0.802, v: 0.6066 },
+  { id: 'nha-ve-sinh-3', name: 'Nhà vệ sinh 3', icon: 'Wc', cat: 'tienich', u: 0.8161, v: 0.4801 },
+  { id: 'nha-ve-sinh-4', name: 'Nhà vệ sinh 4', icon: 'Wc', cat: 'tienich', u: 0.8021, v: 0.2831 },
+  { id: 'nha-ve-sinh-5', name: 'Nhà vệ sinh 5', icon: 'Wc', cat: 'tienich', u: 0.2219, v: 0.3288 },
 
   // --- Tiện ích: sạc điện thoại ---
-  { id: 'sac-1', name: 'Sạc điện thoại (khu trại trên)', icon: 'ChargingStation', cat: 'tienich', u: 0.263, v: 0.5525 },
-  { id: 'sac-2', name: 'Sạc điện thoại (khu trại dưới, trái)', icon: 'ChargingStation', cat: 'tienich', u: 0.258, v: 0.691 },
-  { id: 'sac-3', name: 'Sạc điện thoại (khu trại dưới, phải)', icon: 'ChargingStation', cat: 'tienich', u: 0.732, v: 0.691 },
+  { id: 'sac-1', name: 'Sạc điện thoại 1', icon: 'ChargingStation', cat: 'tienich', u: 0.3015, v: 0.7202 },
+  { id: 'sac-2', name: 'Sạc điện thoại 2', icon: 'ChargingStation', cat: 'tienich', u: 0.6105, v: 0.725 },
+  { id: 'sac-3', name: 'Sạc điện thoại 3', icon: 'ChargingStation', cat: 'tienich', u: 0.5751, v: 0.6688 },
+  { id: 'sac-4', name: 'Sạc điện thoại 4', icon: 'ChargingStation', cat: 'tienich', u: 0.6835, v: 0.6311 },
+  { id: 'sac-5', name: 'Sạc điện thoại 5', icon: 'ChargingStation', cat: 'tienich', u: 0.6469, v: 0.5634 },
+  { id: 'sac-6', name: 'Sạc điện thoại 6', icon: 'ChargingStation', cat: 'tienich', u: 0.3232, v: 0.6066 },
+  { id: 'sac-7', name: 'Sạc điện thoại 7', icon: 'ChargingStation', cat: 'tienich', u: 0.3803, v: 0.4256 },
+
+  // --- Tiện ích: nước & thức ăn ---
+  { id: 'phat-nuoc-1', name: 'Điểm phát nước 1', icon: 'LocalDrink', cat: 'tienich', u: 0.3662, v: 0.8693 },
+  { id: 'phat-nuoc-2', name: 'Điểm phát nước 2', icon: 'LocalDrink', cat: 'tienich', u: 0.5381, v: 0.85 },
+  { id: 'phat-nuoc-3', name: 'Điểm phát nước 3', icon: 'LocalDrink', cat: 'tienich', u: 0.458, v: 0.7057 },
+  { id: 'diem-thuc-pham-4', name: 'Điểm thực phẩm và nước 4', icon: 'Restaurant', cat: 'tienich', u: 0.5772, v: 0.6138 },
+
+  // --- Đi lại & đỗ xe ---
+  { id: 'cong-chinh', name: 'Cổng chính (Điểm đón trả khách)', icon: 'DirectionsBus', cat: 'giaothong', u: 0.4998, v: 0.9216 },
+  // Bãi đỗ xe nằm ngoài khuôn viên (uv ngoài [0,1] — hợp lệ). Cần đo thực địa chỉnh lại.
+  { id: 'bai-do-xe', name: 'Bãi đỗ xe khách', icon: 'LocalParking', cat: 'giaothong', u: -1.8872, v: 0.8968 },
 ]
