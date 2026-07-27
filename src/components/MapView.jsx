@@ -179,17 +179,44 @@ export default function MapView({
             const { u, v } = latLngToUv(cal, { lat: lb.lat, lng: lb.lng })
             return uvToLatLng(frame, u, v)
           })()
-    const shown = REGION_LABELS.filter((lb) => zoom >= (lb.minZoom ?? 0))
+    // Ưu tiên khi tránh chồng: mốc chỉ dẫn > quốc lộ > một chiều > tên đường > thị trấn > sông > làng
+    const PRIO = { shrine: 100, place: 90, shield: 80, oneway: 70, road: 55, town: 50, river: 45, village: 25 }
+    // Ước lượng kích thước nhãn (px) để tính chồng lấn theo layer-point (ổn định,
+    // không phụ thuộc thời điểm render như đo getBoundingClientRect).
+    const SIZE = {
+      shrine: { fs: 12, px: 24, lines: 2 }, place: { fs: 11, px: 22 },
+      shield: { fs: 11, px: 22 }, oneway: { fs: 9.5, px: 18 },
+      road: { fs: 10.5, px: 6 }, town: { fs: 12.5, px: 8 },
+      river: { fs: 11, px: 10 }, village: { fs: 10.5, px: 6 },
+    }
+    const z = map.getZoom()
+    // Bỏ nhãn làng cho gọn (poster chỉ dẫn chỉ cần đường + mốc chính + thị trấn)
+    const shown = REGION_LABELS
+      .filter((lb) => lb.kind !== 'village')
+      .map((lb) => ({ lb, prio: PRIO[lb.kind] ?? 40 }))
+      .sort((a, b) => b.prio - a.prio)
+
+    const placedRects = []
+    const kept = []
+    for (const { lb } of shown) {
+      const p = map.project(place(lb), z)
+      const s = SIZE[lb.kind] || SIZE.village
+      const w = Math.min(lb.text.length * s.fs * 0.56 + s.px, s.lines ? 150 : 999)
+      const h = s.fs * (s.lines || 1) + 10
+      const rect = { left: p.x - w / 2, right: p.x + w / 2, top: p.y - h / 2, bottom: p.y + h / 2 }
+      const hit = placedRects.some((r) =>
+        !(rect.right + 5 < r.left || rect.left - 5 > r.right || rect.bottom + 5 < r.top || rect.top - 5 > r.bottom))
+      if (!hit) { placedRects.push(rect); kept.push(lb) }
+    }
+
     labelLayerRef.current = L.layerGroup(
-      shown.map((lb) =>
+      kept.map((lb) =>
         L.marker(place(lb), {
-          interactive: false,
-          keyboard: false,
+          interactive: false, keyboard: false,
           icon: L.divIcon({
             className: '',
             html: `<div class="region-label region-label-${lb.kind}">${lb.text}</div>`,
-            iconSize: [200, 18],
-            iconAnchor: [100, 9],
+            iconSize: [220, 20], iconAnchor: [110, 10],
           }),
         })
       )
@@ -228,19 +255,25 @@ export default function MapView({
     if (mode !== 'normal') { map.setMaxBounds(null); map.setMinZoom(13); map.setMaxZoom(21); return }
 
     if (viewMode === 'region') {
-      // Khóa zoom: canh vừa khít khung "đường đến La Vang", không cho zoom tự do.
+      // Khóa zoom: canh khít khung "đường đến La Vang" — gồm cả 4 góc khuôn viên
+      // (để không bị cắt), các mốc đường vào và bãi đỗ xe.
       const toDisp = (ll) => {
         const { u, v } = latLngToUv(cal, { lat: ll[0], lng: ll[1] })
         return uvToLatLng(frame, u, v)
       }
       const b = L.latLngBounds([
+        uvToLatLng(frame, 0, 0), uvToLatLng(frame, 1, 0),
+        uvToLatLng(frame, 0, 1), uvToLatLng(frame, 1, 1),
+        uvToLatLng(frame, -1.8872, 0.8968), // bãi đỗ xe
         ...GUIDE_POINTS.map(toDisp),
-        uvToLatLng(frame, 0.5, 1.0), // cổng chính khuôn viên
-      ]).pad(0.08)
-      const pad = L.point(24, 24)
+      ]).pad(0.06)
+      // Nới min/maxZoom trước khi tính, nếu không getBoundsZoom bị kẹp ở minZoom
+      // của campus (~16.75) và không zoom xa ra được để thấy hết vùng.
+      map.setMinZoom(1); map.setMaxZoom(21)
+      const pad = L.point(30, 30)
       const z = map.getBoundsZoom(b, false, pad)
       map.setMinZoom(z); map.setMaxZoom(z)
-      map.setMaxBounds(b.pad(0.25))
+      map.setMaxBounds(b.pad(0.3))
       map.setView(b.getCenter(), z, { animate: false })
       return
     }
@@ -268,11 +301,8 @@ export default function MapView({
     const group = poiLayerRef.current
     if (!group) return
     group.clearLayers()
-    // Zoom xa: khuôn viên chỉ còn ~340px, 29 marker sẽ đè nhau — chỉ giữ nhóm
-    // đi lại (bãi đỗ xe, đón trả khách) là thứ người ta cần ở tầm nhìn vùng.
-    const visible = lowZoom
-      ? pois.filter((p) => p.cat === 'giaothong' || p.id === selectedPoiId)
-      : pois
+    // Ở chế độ region chỉ hiện nhãn chỉ dẫn (đã đủ), ẩn hết marker POI cho gọn.
+    const visible = lowZoom ? [] : pois
     for (const poi of visible) {
       const color = CATEGORIES[poi.cat]?.color || '#5f6368'
       const selected = poi.id === selectedPoiId
