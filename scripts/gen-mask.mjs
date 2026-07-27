@@ -21,12 +21,15 @@ for (let i = 0; i < W * H; i++) {
 }
 console.log('sau phân loại:', count(walk))
 
-// ---- Morphology: đóng lỗ nhỏ rồi bỏ đốm lẻ ----
+// ---- Morphology: CHỈ closing (nở rồi co cùng mức) ----
+// Bridge các khe hở/đứt đoạn (đường bị bóng cây, gạch đổi màu) nhưng GIỮ các lối
+// đi hẹp 1 ô (~1.6m). Trước đây có thêm opening làm xóa mất lối hẹp -> đứt mạng
+// -> tuyến đi vòng xa. Closing radius 2 bridge được khe ~6m.
 let m = dilate(walk, 1)
-m = erode(m, 1)
-m = erode(m, 1)
 m = dilate(m, 1)
-console.log('sau morphology:', count(m))
+m = erode(m, 1)
+m = erode(m, 1)
+console.log('sau morphology (closing 2):', count(m))
 
 // ---- Bắc cầu các nút thắt chéo ----
 // A* cấm cắt góc, nên 2 ô chỉ dính nhau theo đường chéo là không đi qua được.
