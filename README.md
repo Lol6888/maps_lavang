@@ -11,10 +11,17 @@ npm run dev
 
 ## Luồng sử dụng
 
-1. **Màn hình chọn địa điểm** — 4 phân khu thu gọn được (mặc định đóng hết để thấy toàn cảnh trong một màn hình), mỗi phân khu hiện số địa điểm và khoảng cách gần nhất; mở ra là lưới 2 cột. Ô tìm kiếm tự mở các phân khu có kết quả. Khi đã có GPS, mỗi ô hiện khoảng cách và tự sắp theo gần → xa.
-2. **Chế độ dẫn đường** — chọn một thẻ, bản đồ vẽ đường đi bộ từ chỗ user đang đứng tới đích, kèm quãng đường và số phút đi bộ; tới nơi (<15m) báo "Bạn đã tới nơi".
-3. **Bản đồ tổng quan** — nút "Xem toàn bộ bản đồ" (hoặc 🗺️ khi đang dẫn đường) để xem tự do mọi điểm, lọc theo danh mục, chạm marker → "Chỉ đường tới đây".
-4. **Bật/tắt lớp cây** — nút 🌳/🚫 ở mọi chế độ bản đồ, tắt cây để nhìn rõ lối đi.
+1. **Splash** — logo/emblem La Vang (ảnh Thánh Đường ken-burns, tiêu đề Playfair), tự tắt sau ~2.2s rồi vào **thẳng bản đồ nội khu**. Không còn màn dashboard đầu.
+2. **Bản đồ nội khu (campus)** — zoom tự do, đủ 39 điểm. Chạm marker → **popup giữa màn hình** (tên, 3 ảnh, nút Chỉ đường). Nút 🔍 mở panel tìm/duyệt địa điểm; nút cây, nút vị trí.
+3. **Chỉ đường** — từ popup, vẽ đường đi bộ từ chỗ user tới đích, quãng đường + phút đi bộ; tới nơi (<15m) báo "Bạn đã tới nơi".
+4. **Đường đến La Vang (region)** — nút trên cùng chuyển sang màn **khóa zoom** chỉ 2 chế độ: xem tổng thể đường xe vào La Vang (QL1A, Lê Lợi/Liên Xã một chiều, Cầu Trắng, bãi đỗ) và **chạm/nút để vào bản đồ nội khu**.
+
+Giao diện tổng thể theo dự án **giolelavang**: navy Marian `#0F2C67` + vàng kim `#C5A059`,
+glassmorphism tối, font Playfair Display (tiêu đề) / Be Vietnam Pro (thân) / Montserrat (nhãn).
+Bản đồ nội khu là artwork sáng nên giữ nguyên; chrome phủ lên là kính tối.
+
+Popup chi tiết hiện 3 ảnh placeholder; thả ảnh thật qua `poi.images = [url1, url2, url3]` trong
+`src/data/pois.js`. Logo splash cũng là emblem tạm — thay bằng logo chính thức sau.
 
 ## Giao diện
 

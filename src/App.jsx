@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import MapView from './components/MapView.jsx'
-import HomeScreen from './components/HomeScreen.jsx'
+import PlacesPanel from './components/PlacesPanel.jsx'
+import DetailPopup from './components/DetailPopup.jsx'
+import Splash from './components/Splash.jsx'
 import Icon from './components/Icon.jsx'
 import { CATEGORIES, POIS } from './data/pois.js'
 import { REGION } from './data/region.js'
@@ -17,7 +19,6 @@ const params = new URLSearchParams(window.location.search)
 const MODE = params.has('calibrate') ? 'calibrate' : params.has('editpoi') ? 'editpoi' : 'normal'
 const ARRIVED_M = 15
 
-// ?mock=16.7069,107.1954 — giả lập vị trí để thử/demo khi không ở tại chỗ
 const MOCK_POS = (() => {
   const raw = params.get('mock')
   if (!raw) return null
@@ -27,36 +28,29 @@ const MOCK_POS = (() => {
 
 export default function App() {
   const [cal, setCal] = useState(loadCalibration)
-  const [screen, setScreen] = useState(MODE === 'normal' ? 'home' : 'map')
+  // 'splash' → 'campus' (nội khu, zoom tự do) ↔ 'region' (đường vào, khóa zoom)
+  const [screen, setScreen] = useState(MODE === 'normal' ? 'splash' : 'campus')
   const [destination, setDestination] = useState(null)
+  const [detailPoi, setDetailPoi] = useState(null)
+  const [showPlaces, setShowPlaces] = useState(false)
   const [layer, setLayer] = useState('tree')
   const [overlayOpacity, setOverlayOpacity] = useState(MODE === 'calibrate' ? 0.7 : 1)
-  const [activeCats, setActiveCats] = useState(() => new Set(Object.keys(CATEGORIES)))
-  const [selectedPoi, setSelectedPoi] = useState(null)
   const [follow, setFollow] = useState(false)
 
-  // Ứng dụng dẫn đường: cần vị trí ngay từ đầu để xếp danh sách theo khoảng cách
   const geo = useGeolocation(MODE !== 'calibrate', MOCK_POS)
   const pos = geo.position
 
-  // Vị trí người dùng trong hệ tọa độ ảnh
   const userUV = useMemo(() => (pos ? latLngToUv(cal, { lat: pos.lat, lng: pos.lng }) : null), [pos, cal])
   const insideCampus =
     userUV && userUV.u > -0.03 && userUV.u < 1.03 && userUV.v > -0.03 && userUV.v < 1.03
-
-  // Chỉ tính lại đường đi khi người dùng đổi ô lưới (~1.2m)
   const userCellKey = userUV ? `${Math.round(userUV.u * MASK_W)},${Math.round(userUV.v * MASK_H)}` : null
 
   const routeInfo = useMemo(() => {
     if (!destination || !userUV) return null
     const inRange = (t) => t.u > -0.05 && t.u < 1.05 && t.v > -0.05 && t.v < 1.05
-    // Một trong hai đầu nằm ngoài mặt nạ lối đi (vd bãi đỗ xe) -> đường chim bay
     if (!inRange(userUV) || !inRange(destination)) {
       return {
-        path: [
-          { u: userUV.u, v: userUV.v },
-          { u: destination.u, v: destination.v },
-        ],
+        path: [{ u: userUV.u, v: userUV.v }, { u: destination.u, v: destination.v }],
         meters: pos ? straightDistance(cal, destination, pos) : 0,
         dashed: true,
       }
@@ -72,64 +66,39 @@ export default function App() {
   const visiblePois = useMemo(() => {
     if (MODE === 'calibrate') return []
     if (destination) return [destination]
-    return POIS.filter((p) => activeCats.has(p.cat))
-  }, [activeCats, destination])
-
-  // Vào chế độ dẫn đường thì thôi bám theo vị trí, để zoom vừa khít đường đi
-  useEffect(() => {
-    if (destination) setFollow(false)
+    return POIS
   }, [destination])
 
-  const goHome = () => {
-    setDestination(null)
-    setSelectedPoi(null)
-    setScreen('home')
-  }
-  const pickDestination = (poi) => {
-    setSelectedPoi(null)
-    setDestination(poi)
-    setScreen('map')
-  }
-  const showOverview = () => {
-    setDestination(null)
-    setScreen('map')
-  }
+  useEffect(() => { if (destination) setFollow(false) }, [destination])
 
-  const toggleCat = (key) => {
-    setActiveCats((prev) => {
-      const next = new Set(prev)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
-      return next
-    })
-  }
+  // ---- Điều hướng ----
+  const openDetail = (poi) => { setShowPlaces(false); setDetailPoi(poi) }
+  const startRoute = (poi) => { setDetailPoi(null); setDestination(poi); setScreen('campus') }
+  const exitGuide = () => setDestination(null)
+  const goRegion = () => { setDetailPoi(null); setDestination(null); setScreen('region') }
+  const goCampus = () => setScreen('campus')
 
-  if (MODE === 'normal' && screen === 'home') {
-    return (
-      <HomeScreen
-        cal={cal}
-        position={pos}
-        geoStatus={geo.status}
-        onPick={pickDestination}
-        onOverview={showOverview}
-      />
-    )
+  if (MODE === 'normal' && screen === 'splash') {
+    return <Splash onDone={() => setScreen('campus')} />
   }
 
   const guiding = MODE === 'normal' && !!destination
-  const appClass = `app${guiding ? ' guiding' : ''}${!guiding && selectedPoi ? ' has-sheet' : ''}`
+  const viewMode = screen === 'region' ? 'region' : 'campus'
+  const appClass = `app${guiding ? ' guiding' : ''}`
 
   return (
     <div className={appClass}>
       <MapView
         mode={MODE}
+        viewMode={viewMode}
         layer={layer}
         overlayOpacity={overlayOpacity}
         cal={cal}
         onCalChange={setCal}
         pois={visiblePois}
-        selectedPoiId={selectedPoi?.id ?? destination?.id ?? null}
-        onSelectPoi={setSelectedPoi}
+        selectedPoiId={detailPoi?.id ?? destination?.id ?? null}
+        onSelectPoi={(p) => (p ? openDetail(p) : null)}
+        onMapTap={viewMode === 'region' ? goCampus : undefined}
         position={pos}
         follow={follow}
         onUserInteract={() => setFollow(false)}
@@ -138,45 +107,28 @@ export default function App() {
         fitKey={destination?.id ?? null}
       />
 
-      {MODE === 'normal' && (
+      {MODE === 'normal' && viewMode === 'campus' && (
         <>
-          <div className="map-top">
-            <div className="top-pill">
-              <button className="icon-btn" onClick={goHome} aria-label="Quay lại danh sách">
-                <Icon name="ArrowBack" size={22} />
+          {guiding ? (
+            <GuideBar destination={destination} onExit={exitGuide} onRegion={goRegion} />
+          ) : (
+            <div className="map-top">
+              <button className="pill-btn" onClick={goRegion}>
+                <Icon name="DirectionsBus" size={20} />
+                <span>Đường đến La Vang</span>
               </button>
-              <div className="pill-text">
-                <div className="pill-title">{guiding ? destination.name : 'Bản đồ tổng quan'}</div>
-                {guiding && <div className="pill-sub">Đi bộ từ vị trí của bạn</div>}
-              </div>
-              {guiding && (
-                <button className="icon-btn" onClick={showOverview} aria-label="Xem toàn bộ bản đồ">
-                  <Icon name="Map" size={22} />
-                </button>
-              )}
             </div>
-
-            {!guiding && (
-              <div className="chips">
-                {Object.entries(CATEGORIES).map(([key, c]) => (
-                  <button
-                    key={key}
-                    className={`chip${activeCats.has(key) ? ' chip-on' : ''}`}
-                    style={{ '--c': c.color, '--c-bg': `${c.color}1f` }}
-                    onClick={() => toggleCat(key)}
-                  >
-                    <Icon name={c.icon} size={18} />
-                    {c.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          )}
 
           <div className="fabs">
+            {!guiding && (
+              <button className="fab" title="Tìm địa điểm" onClick={() => setShowPlaces(true)}>
+                <Icon name="Search" size={22} />
+              </button>
+            )}
             <button
               className={`fab${layer === 'notree' ? ' fab-on' : ''}`}
-              title={layer === 'tree' ? 'Ẩn cây để xem rõ lối đi' : 'Hiện cây'}
+              title={layer === 'tree' ? 'Ẩn cây' : 'Hiện cây'}
               onClick={() => setLayer((l) => (l === 'tree' ? 'notree' : 'tree'))}
             >
               <Icon name={layer === 'tree' ? 'Park' : 'Layers'} size={22} />
@@ -190,41 +142,35 @@ export default function App() {
             </button>
           </div>
 
-          <div className="attribution">{REGION.attribution}</div>
-
           <Banners geo={geo} pos={pos} insideCampus={insideCampus} guiding={guiding} routeInfo={routeInfo} />
 
           {guiding && (
-            <GuideCard
-              routeInfo={routeInfo}
-              arrived={arrived}
-              hasPosition={!!pos}
-              insideCampus={insideCampus}
-            />
-          )}
-
-          {!guiding && selectedPoi && (
-            <PlaceSheet
-              poi={selectedPoi}
-              cal={cal}
-              pos={pos}
-              onClose={() => setSelectedPoi(null)}
-              onRoute={() => pickDestination(selectedPoi)}
-            />
+            <GuideCard routeInfo={routeInfo} arrived={arrived} hasPosition={!!pos} insideCampus={insideCampus} />
           )}
         </>
       )}
 
+      {MODE === 'normal' && viewMode === 'region' && (
+        <RegionChrome onEnter={goCampus} />
+      )}
+
+      {MODE === 'normal' && showPlaces && (
+        <PlacesPanel cal={cal} position={pos} geoStatus={geo.status}
+          onPick={openDetail} onClose={() => setShowPlaces(false)} />
+      )}
+
+      {MODE === 'normal' && detailPoi && (
+        <DetailPopup poi={detailPoi} cal={cal} pos={pos}
+          onClose={() => setDetailPoi(null)} onRoute={() => startRoute(detailPoi)} />
+      )}
+
+      {MODE === 'normal' && <div className="attribution">{REGION.attribution}</div>}
+
       {MODE === 'calibrate' && (
-        <CalibratePanel
-          cal={cal}
-          layer={layer}
-          setLayer={setLayer}
-          opacity={overlayOpacity}
-          setOpacity={setOverlayOpacity}
+        <CalibratePanel cal={cal} layer={layer} setLayer={setLayer}
+          opacity={overlayOpacity} setOpacity={setOverlayOpacity}
           onSave={() => saveCalibration(cal)}
-          onClear={() => { clearCalibration(); setCal(DEFAULT_CALIBRATION) }}
-        />
+          onClear={() => { clearCalibration(); setCal(DEFAULT_CALIBRATION) }} />
       )}
 
       {MODE === 'editpoi' && (
@@ -234,10 +180,45 @@ export default function App() {
   )
 }
 
+function GuideBar({ destination, onExit, onRegion }) {
+  return (
+    <div className="map-top">
+      <div className="top-pill glass">
+        <button className="icon-btn" onClick={onExit} aria-label="Kết thúc chỉ đường">
+          <Icon name="ArrowBack" size={22} />
+        </button>
+        <div className="pill-text">
+          <div className="pill-title">{destination.name}</div>
+          <div className="pill-sub">Đi bộ từ vị trí của bạn</div>
+        </div>
+        <button className="icon-btn" onClick={onRegion} aria-label="Đường đến La Vang">
+          <Icon name="DirectionsBus" size={20} />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function RegionChrome({ onEnter }) {
+  return (
+    <>
+      <div className="map-top">
+        <div className="region-title glass">
+          <Icon name="DirectionsBus" size={20} />
+          <span>Đường xe đến Trung tâm La Vang</span>
+        </div>
+      </div>
+      <button className="enter-campus" onClick={onEnter}>
+        <Icon name="Map" size={20} />
+        Vào bản đồ khu hành hương
+      </button>
+    </>
+  )
+}
+
 function GuideCard({ routeInfo, arrived, hasPosition, insideCampus }) {
   return (
-    <div className="guide-card">
-      <div className="sheet-handle" />
+    <div className="guide-card glass">
       <div className="guide-row">
         <span className="guide-mode">
           <Icon name="DirectionsWalk" size={24} />
@@ -248,7 +229,7 @@ function GuideCard({ routeInfo, arrived, hasPosition, insideCampus }) {
           ) : routeInfo?.dashed ? (
             <>
               <div className="guide-time">{formatDistance(routeInfo.meters)}</div>
-              <div className="guide-dist">đường chim bay · điểm nằm ngoài khuôn viên, đi theo biển chỉ dẫn</div>
+              <div className="guide-dist">đường chim bay · điểm ngoài khuôn viên, đi theo biển chỉ dẫn</div>
             </>
           ) : routeInfo ? (
             <>
@@ -257,11 +238,7 @@ function GuideCard({ routeInfo, arrived, hasPosition, insideCampus }) {
             </>
           ) : (
             <div className="guide-wait">
-              {!hasPosition
-                ? 'Đang chờ vị trí GPS…'
-                : !insideCampus
-                  ? 'Bạn đang ở ngoài khuôn viên'
-                  : 'Chưa tìm được lối đi'}
+              {!hasPosition ? 'Đang chờ vị trí GPS…' : !insideCampus ? 'Bạn đang ở ngoài khuôn viên' : 'Chưa tìm được lối đi'}
             </div>
           )}
         </div>
@@ -270,64 +247,25 @@ function GuideCard({ routeInfo, arrived, hasPosition, insideCampus }) {
   )
 }
 
-function PlaceSheet({ poi, cal, pos, onClose, onRoute }) {
-  const cat = CATEGORIES[poi.cat]
-  return (
-    <div className="sheet">
-      <div className="sheet-handle" />
-      <div className="sheet-head">
-        <div className="sheet-title">
-          <div className="sheet-name">{poi.name}</div>
-          <div className="sheet-meta">
-            {pos ? (
-              <>
-                <b>{formatDistance(straightDistance(cal, poi, pos))}</b> · {cat.label}
-              </>
-            ) : (
-              cat.label
-            )}
-          </div>
-        </div>
-        <button className="icon-btn" onClick={onClose} aria-label="Đóng">
-          <Icon name="Close" size={22} />
-        </button>
-      </div>
-      <div className="sheet-actions">
-        <button className="btn-filled" onClick={onRoute}>
-          <Icon name="DirectionsWalk" size={20} />
-          Chỉ đường
-        </button>
-      </div>
-    </div>
-  )
-}
-
 function Banners({ geo, pos, insideCampus, guiding, routeInfo }) {
   const items = []
   if (geo.status === 'denied')
-    items.push(['warn', 'Bạn đã từ chối quyền vị trí. Hãy bật lại quyền Vị trí cho trang này trong cài đặt trình duyệt.'])
+    items.push(['warn', 'Bạn đã từ chối quyền vị trí. Hãy bật lại quyền Vị trí cho trang này.'])
   else if (geo.status === 'unavailable') items.push(['warn', 'Thiết bị không lấy được vị trí GPS.'])
   else if (!pos) items.push(['', 'Đang dò tín hiệu GPS…'])
-  else if (pos.stale) items.push(['', `Tín hiệu GPS yếu (±${Math.round(pos.accuracy)}m) — vị trí có thể lệch.`])
-
-  if (pos && !insideCampus)
-    items.push(['', 'Bạn đang ở ngoài Trung tâm hành hương La Vang.'])
-  else if (guiding && pos && insideCampus && !routeInfo)
-    items.push(['warn', 'Không tìm được lối đi bộ tới điểm này.'])
+  else if (pos.stale) items.push(['', `Tín hiệu GPS yếu (±${Math.round(pos.accuracy)}m).`])
+  if (pos && !insideCampus) items.push(['', 'Bạn đang ở ngoài Trung tâm hành hương La Vang.'])
+  else if (guiding && pos && insideCampus && !routeInfo) items.push(['warn', 'Không tìm được lối đi bộ tới điểm này.'])
 
   return items.map(([kind, text], i) => (
-    <div key={i} className={`banner${kind ? ` banner-${kind}` : ''}`} style={{ '--i': i }}>
-      {text}
-    </div>
+    <div key={i} className={`banner${kind ? ` banner-${kind}` : ''}`} style={{ '--i': i }}>{text}</div>
   ))
 }
 
 function CalibratePanel({ cal, layer, setLayer, opacity, setOpacity, onSave, onClear }) {
-  // Thu gọn được: khi mở, panel che mất tay nắm TL/TR nằm ở nửa dưới màn hình.
   const [open, setOpen] = useState(false)
   const [showJson, setShowJson] = useState(false)
   const json = JSON.stringify(cal, null, 2)
-
   return (
     <div className="cal-panel">
       <button className="cal-head" onClick={() => setOpen((o) => !o)}>
@@ -335,23 +273,14 @@ function CalibratePanel({ cal, layer, setLayer, opacity, setOpacity, onSave, onC
         <span>Căn chỉnh bản đồ</span>
         <Icon name={open ? 'ExpandMore' : 'ExpandLess'} size={22} />
       </button>
-
       {open && (
         <div className="cal-body">
-          <p className="cal-help">
-            Kéo <b>TL / TR / BL</b> để khớp ảnh với vệ tinh, kéo{' '}
-            <Icon name="OpenWith" size={15} className="cal-inline-icon" /> để dời cả ảnh.
-            Ảnh xoay ~194° so với hướng Bắc nên các nhãn góc nằm lệch trên màn hình:{' '}
-            <b>BL</b> ở phía bắc, <b>TL/TR</b> ở phía nam.
-          </p>
-
           <label className="cal-row">
             <span className="cal-label">Độ mờ ảnh</span>
             <input type="range" min="0.2" max="1" step="0.05" value={opacity}
               onChange={(e) => setOpacity(Number(e.target.value))} />
             <span className="cal-value">{Math.round(opacity * 100)}%</span>
           </label>
-
           <div className="cal-row">
             {['tree', 'notree', 'none'].map((l) => (
               <button key={l} className={`chip${layer === l ? ' chip-on' : ''}`} onClick={() => setLayer(l)}>
@@ -359,22 +288,12 @@ function CalibratePanel({ cal, layer, setLayer, opacity, setOpacity, onSave, onC
               </button>
             ))}
           </div>
-
           <div className="cal-row">
-            <button className="btn" onClick={() => navigator.clipboard?.writeText(json)}>
-              <Icon name="ContentCopy" size={16} /> Copy
-            </button>
-            <button className="btn btn-primary" onClick={onSave}>
-              <Icon name="Save" size={16} /> Lưu
-            </button>
-            <button className="btn" onClick={onClear}>
-              <Icon name="RestartAlt" size={16} /> Mặc định
-            </button>
-            <button className="btn" onClick={() => setShowJson((s) => !s)}>
-              JSON
-            </button>
+            <button className="btn" onClick={() => navigator.clipboard?.writeText(json)}><Icon name="ContentCopy" size={16} /> Copy</button>
+            <button className="btn btn-primary" onClick={onSave}><Icon name="Save" size={16} /> Lưu</button>
+            <button className="btn" onClick={onClear}><Icon name="RestartAlt" size={16} /> Mặc định</button>
+            <button className="btn" onClick={() => setShowJson((s) => !s)}>JSON</button>
           </div>
-
           {showJson && <pre className="cal-json">{json}</pre>}
         </div>
       )}

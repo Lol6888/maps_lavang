@@ -6,8 +6,16 @@ import {
   displayCalFrom, campusBearing, realToDisplay,
 } from '../map/calibration.js'
 import { CATEGORIES } from '../data/pois.js'
-import { REGION, REGION_SWAP_ZOOM, REGION_SAFE, REGION_LABELS } from '../data/region.js'
+import { REGION, REGION_LABELS } from '../data/region.js'
 import { iconSvg } from './Icon.jsx'
+
+// Điểm mốc để canh khung "đường đến La Vang" (chế độ region): Cầu Trắng,
+// giao Liên Xã × QL 1A, điểm đón trả khách — cùng khuôn viên.
+const GUIDE_POINTS = [
+  [16.740095, 107.192115],
+  [16.716075, 107.212915],
+  [16.710181, 107.194709],
+]
 
 const MAP_URLS = {
   tree: '/map/base-tree-4096.webp',
@@ -18,6 +26,7 @@ const ESRI_SAT = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Ima
 
 export default function MapView({
   mode, // 'normal' | 'calibrate' | 'editpoi'
+  viewMode, // 'campus' (zoom tự do) | 'region' (đường vào, khóa zoom)
   layer, // 'tree' | 'notree' | 'none'
   overlayOpacity,
   cal,
@@ -25,6 +34,7 @@ export default function MapView({
   pois,
   selectedPoiId,
   onSelectPoi,
+  onMapTap, // chạm nền ở chế độ region → vào khu hành hương
   position, // { lat, lng, accuracy, heading, stale } | null
   follow,
   onUserInteract,
@@ -37,7 +47,7 @@ export default function MapView({
   const frame = mode === 'calibrate' ? cal : displayCal
 
   const [zoom, setZoom] = useState(16.5)
-  const lowZoom = zoom < REGION_SWAP_ZOOM
+  const lowZoom = viewMode === 'region'
 
   const divRef = useRef(null)
   const mapRef = useRef(null)
@@ -67,7 +77,7 @@ export default function MapView({
   }, [cal, frame])
 
   // callbacks/props mới nhất cho các listener gắn 1 lần
-  handlersRef.current = { onSelectPoi, onUserInteract, onCalChange, cal, frame, mode }
+  handlersRef.current = { onSelectPoi, onUserInteract, onCalChange, onMapTap, cal, frame, mode, viewMode }
 
   // ---- Khởi tạo map (1 lần) ----
   useEffect(() => {
@@ -91,6 +101,8 @@ export default function MapView({
         const txt = `u: ${u.toFixed(4)}, v: ${v.toFixed(4)}`
         console.log('[editpoi]', txt)
         navigator.clipboard?.writeText(txt).catch(() => {})
+      } else if (h.viewMode === 'region' && h.onMapTap) {
+        h.onMapTap()
       } else {
         h.onSelectPoi?.(null)
       }
@@ -157,7 +169,8 @@ export default function MapView({
       map.removeLayer(labelLayerRef.current)
       labelLayerRef.current = null
     }
-    if (mode !== 'normal') return
+    // Nhãn địa danh chỉ hiện ở chế độ "đường đến La Vang" (region)
+    if (mode !== 'normal' || viewMode !== 'region') return
     // Nhãn khuôn viên lưu theo uv; nhãn từ OSM lưu theo lat/lng thật
     const place = (lb) =>
       lb.u !== undefined
@@ -181,7 +194,7 @@ export default function MapView({
         })
       )
     ).addTo(map)
-  }, [mode, zoom, frame, cal])
+  }, [mode, viewMode, zoom, frame, cal])
 
   // ---- Ảnh bản đồ khuôn viên (luôn hiện — hình dán trong sơ đồ đã bị xóa) ----
   useEffect(() => {
@@ -208,29 +221,47 @@ export default function MapView({
     overlayRef.current?.setOpacity(overlayOpacity)
   }, [overlayOpacity])
 
-  // ---- Giới hạn pan (chế độ thường) ----
+  // ---- Điều khiển khung nhìn theo 2 chế độ ----
   useEffect(() => {
     const map = mapRef.current
     if (!map) return
-    if (mode === 'normal') {
-      // Hộp an toàn nội tiếp canvas sơ đồ đã xoay: viewport luôn nằm trong nền.
-      // minZoom động theo kích thước màn hình: mức zoom nhỏ nhất mà viewport
-      // vẫn lọt trong hộp (màn hình càng rộng minZoom càng cao).
-      const bounds = L.latLngBounds(
-        uvToLatLng(frame, REGION_SAFE.u0, REGION_SAFE.v0),
-        uvToLatLng(frame, REGION_SAFE.u1, REGION_SAFE.v1)
-      )
-      const apply = () => {
-        map.setMaxBounds(bounds)
-        map.setMinZoom(map.getBoundsZoom(bounds, true))
+    if (mode !== 'normal') { map.setMaxBounds(null); map.setMinZoom(13); map.setMaxZoom(21); return }
+
+    if (viewMode === 'region') {
+      // Khóa zoom: canh vừa khít khung "đường đến La Vang", không cho zoom tự do.
+      const toDisp = (ll) => {
+        const { u, v } = latLngToUv(cal, { lat: ll[0], lng: ll[1] })
+        return uvToLatLng(frame, u, v)
       }
-      apply()
-      map.on('resize', apply)
-      return () => map.off('resize', apply)
+      const b = L.latLngBounds([
+        ...GUIDE_POINTS.map(toDisp),
+        uvToLatLng(frame, 0.5, 1.0), // cổng chính khuôn viên
+      ]).pad(0.08)
+      const pad = L.point(24, 24)
+      const z = map.getBoundsZoom(b, false, pad)
+      map.setMinZoom(z); map.setMaxZoom(z)
+      map.setMaxBounds(b.pad(0.25))
+      map.setView(b.getCenter(), z, { animate: false })
+      return
     }
-    map.setMaxBounds(null)
-    map.setMinZoom(13)
-  }, [mode, frame])
+
+    // Campus: zoom tự do, không zoom xa quá khỏi khuôn viên.
+    const core = L.latLngBounds([
+      uvToLatLng(frame, 0.03, 0.03), uvToLatLng(frame, 0.97, 0.03),
+      uvToLatLng(frame, 0.03, 0.97), uvToLatLng(frame, 0.97, 0.97),
+    ])
+    const apply = () => {
+      const zmin = map.getBoundsZoom(core) // zoom nhỏ nhất còn thấy hết khuôn viên
+      map.setMinZoom(zmin); map.setMaxZoom(21)
+      map.setMaxBounds(L.latLngBounds(
+        uvToLatLng(frame, -0.2, -0.15), uvToLatLng(frame, 1.2, 1.15)
+      ))
+    }
+    apply()
+    map.fitBounds(core, { animate: false })
+    map.on('resize', apply)
+    return () => map.off('resize', apply)
+  }, [mode, viewMode, frame, cal])
 
   // ---- POI markers ----
   useEffect(() => {
