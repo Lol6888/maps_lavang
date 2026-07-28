@@ -342,7 +342,10 @@ export default function MapView({
         iconSize: [30, 30],
         iconAnchor: [15, 15],
       })
-      const m = L.marker(uvToLatLng(frame, poi.u, poi.v), { icon, title: poi.name })
+      // Marker CÓ title phải nằm trên lớp chấm-không-title để pill không bị đè.
+      // (Leaflet xếp z theo vĩ độ; +offset lớn đẩy pill lên trên mọi chấm.)
+      const zOff = selected ? 20000 : tag ? 10000 : 0
+      const m = L.marker(uvToLatLng(frame, poi.u, poi.v), { icon, title: poi.name, zIndexOffset: zOff })
       m.on('click', () => handlersRef.current.onSelectPoi?.(poi))
       group.addLayer(m)
     }
