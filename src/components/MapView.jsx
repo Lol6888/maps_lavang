@@ -340,7 +340,7 @@ export default function MapView({
         className: '',
         html: `<div class="poi-chip${selected ? ' sel' : ''}" style="--c:${color}">
             <span class="poi-dot">${iconSvg(poi.icon, { size: 17, color: selected ? '#fff' : color })}</span>
-            ${tag ? `<span class="poi-tag">${poi.name}</span>` : ''}
+            ${tag ? `<span class="poi-tag${poi.prominent ? ' prom' : ''}">${poi.name}</span>` : ''}
           </div>`,
         iconSize: [30, 30],
         iconAnchor: [15, 15],

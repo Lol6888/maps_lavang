@@ -1,13 +1,17 @@
+import { useState } from 'react'
 import { CATEGORIES } from '../data/pois.js'
+import { POI_IMAGES } from '../data/poi-images.js'
 import { straightDistance, formatDistance } from '../map/geo.js'
 import Icon from './Icon.jsx'
 
 // Popup chi tiết địa điểm — modal giữa màn hình (glassmorphism navy).
-// 3 ảnh: nếu poi.images có thì dùng, không thì hiện 3 ô placeholder.
+// Ảnh minh họa 1–3 tấm (poi-images.js); chạm ảnh để xem lớn. Không có ảnh -> placeholder.
 export default function DetailPopup({ poi, cal, pos, onClose, onRoute }) {
   const cat = CATEGORIES[poi.cat]
   const dist = pos ? straightDistance(cal, poi, pos) : null
-  const images = poi.images && poi.images.length ? poi.images.slice(0, 3) : [null, null, null]
+  const imgs = ((poi.images && poi.images.length ? poi.images : POI_IMAGES[poi.id]) || []).slice(0, 3)
+  const gallery = imgs.length ? imgs : [null, null, null]
+  const [zoom, setZoom] = useState(null) // url ảnh xem lớn
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -29,9 +33,10 @@ export default function DetailPopup({ poi, cal, pos, onClose, onRoute }) {
           </div>
         </div>
 
-        <div className="detail-gallery">
-          {images.map((src, i) => (
-            <div key={i} className="detail-photo" style={{ '--c': cat.color }}>
+        <div className="detail-gallery" style={{ gridTemplateColumns: `repeat(${gallery.length}, 1fr)` }}>
+          {gallery.map((src, i) => (
+            <div key={i} className="detail-photo" style={{ '--c': cat.color }}
+              onClick={() => src && setZoom(src)}>
               {src ? (
                 <img src={src} alt={`${poi.name} ${i + 1}`} loading="lazy" />
               ) : (
@@ -46,6 +51,12 @@ export default function DetailPopup({ poi, cal, pos, onClose, onRoute }) {
           Chỉ đường tới đây
         </button>
       </div>
+
+      {zoom && (
+        <div className="img-lightbox" onClick={(e) => { e.stopPropagation(); setZoom(null) }}>
+          <img src={zoom} alt={poi.name} />
+        </div>
+      )}
     </div>
   )
 }
