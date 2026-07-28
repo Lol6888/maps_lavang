@@ -19,6 +19,8 @@ const ICONS = [
   'door_front', 'shield', 'local_hospital', 'volunteer_activism',
   // đi lại
   'directions_bus', 'local_parking',
+  // nhóm / hoạt động
+  'music_note', 'diversity_3',
 ]
 
 const toPascal = (s) => s.split('_').map((w) => w[0].toUpperCase() + w.slice(1)).join('')

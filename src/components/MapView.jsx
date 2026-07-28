@@ -305,12 +305,17 @@ export default function MapView({
     const visible = lowZoom ? [] : pois
     const map = mapRef.current
 
-    // Quyết định POI nào được kèm chữ: luôn hiện chấm, chỉ hiện title khi không đè
-    // nhãn đã đặt (ưu tiên nhóm quan trọng + điểm đang chọn). Zoom gần -> nhiều chữ.
+    // Chọn POI kèm chữ: luôn hiện chấm. Ở zoom mặc định chỉ ĐIỂM NỔI BẬT mới có
+    // title; zoom gần (>= REVEAL_ZOOM) thì điểm thường cũng hiện dần (né chồng).
+    const REVEAL_ZOOM = 18.3
     const CAT_PRIO = { hanhhuong: 5, toanha: 4, hotro: 4, giaothong: 3, tienich: 2 }
     const z = map ? map.getZoom() : 17
     const ranked = visible
-      .map((poi) => ({ poi, prio: (poi.id === selectedPoiId ? 100 : 0) + (CAT_PRIO[poi.cat] ?? 1) }))
+      .filter((poi) => poi.id === selectedPoiId || poi.prominent || z >= REVEAL_ZOOM)
+      .map((poi) => ({
+        poi,
+        prio: (poi.id === selectedPoiId ? 1000 : 0) + (poi.prominent ? 100 : 0) + (CAT_PRIO[poi.cat] ?? 1),
+      }))
       .sort((a, b) => b.prio - a.prio)
     const tagRects = []
     const withTag = new Set()
@@ -318,7 +323,6 @@ export default function MapView({
       if (!map) break
       const p = map.project(uvToLatLng(frame, poi.u, poi.v), z)
       const w = poi.name.length * 6.4 + 44 // chấm + chữ (px)
-      // nhãn nằm bên phải chấm
       const rect = { left: p.x - 16, right: p.x + w - 16, top: p.y - 12, bottom: p.y + 12 }
       const hit = tagRects.some((r) =>
         !(rect.right + 3 < r.left || rect.left - 3 > r.right || rect.bottom + 2 < r.top || rect.top - 2 > r.bottom))

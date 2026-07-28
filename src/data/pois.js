@@ -14,15 +14,20 @@ export const CATEGORIES = {
 export const POIS = [
   // --- Hành hương ---
   { id: 'duc-me-suoi', name: 'Đức Mẹ Suối', icon: 'Water', cat: 'hanhhuong', u: 0.5381, v: 0.1227 },
-  { id: 'vuong-cung-thanh-duong', name: 'Vương Cung Thánh Đường', icon: 'Church', cat: 'hanhhuong', u: 0.528, v: 0.3024 },
-  { id: 'khu-tu-dao', name: 'Khu các thánh tử đạo', icon: 'AccountBalance', cat: 'hanhhuong', u: 0.236, v: 0.4914 },
-  { id: 'linh-dai', name: 'Linh đài', icon: 'Church', cat: 'hanhhuong', u: 0.3445, v: 0.4898 },
+  { id: 'vuong-cung-thanh-duong', name: 'Vương Cung Thánh Đường', icon: 'Church', cat: 'hanhhuong', u: 0.528, v: 0.3024, prominent: true },
+  { id: 'khu-tu-dao', name: 'Quảng trường các thánh tử đạo', icon: 'AccountBalance', cat: 'hanhhuong', u: 0.236, v: 0.4914 },
+  { id: 'linh-dai', name: 'Linh đài', icon: 'Church', cat: 'hanhhuong', u: 0.3445, v: 0.4898, prominent: true },
   { id: 'nha-chau-thanh-the', name: 'Nhà Chầu Thánh Thể', icon: 'Church', cat: 'hanhhuong', u: 0.3015, v: 0.5212 },
   { id: 'thap-co', name: 'Tháp cổ', icon: 'AccountBalance', cat: 'hanhhuong', u: 0.524, v: 0.4599 },
-  { id: 'nha-nguyen', name: 'Nhà nguyện', icon: 'Church', cat: 'hanhhuong', u: 0.3726, v: 0.547 },
+  { id: 'nha-nguyen', name: 'Nhà nguyện', icon: 'Church', cat: 'hanhhuong', u: 0.3726, v: 0.547, prominent: true },
   { id: 'gieng-duc-me', name: 'Giếng Đức Mẹ', icon: 'WaterDrop', cat: 'hanhhuong', u: 0.4439, v: 0.5482 },
   { id: 'duc-me-ban-on', name: 'Đức Mẹ Ban Ơn', icon: 'Church', cat: 'hanhhuong', u: 0.5892, v: 0.5446 },
-  { id: 'khu-giai-toi', name: 'Khu giải tội', icon: 'VolunteerActivism', cat: 'hanhhuong', u: 0.3092, v: 0.8231 },
+  { id: 'khu-giai-toi', name: 'Nơi lãnh nhận bí tích hòa giải', icon: 'VolunteerActivism', cat: 'hanhhuong', u: 0.3092, v: 0.8231 },
+  // Xin lễ · xin khấn (4 điểm) — bổ sung từ map label add
+  { id: 'xin-le-1', name: 'Xin lễ · xin khấn (Linh đài)', icon: 'VolunteerActivism', cat: 'hanhhuong', u: 0.318, v: 0.4509, prominent: true },
+  { id: 'xin-le-2', name: 'Xin lễ · xin khấn (Nhà hành hương)', icon: 'VolunteerActivism', cat: 'hanhhuong', u: 0.7074, v: 0.4776, prominent: true },
+  { id: 'xin-le-3', name: 'Xin lễ · xin khấn (Nhà nguyện)', icon: 'VolunteerActivism', cat: 'hanhhuong', u: 0.3354, v: 0.522, prominent: true },
+  { id: 'xin-le-4', name: 'Xin lễ · xin khấn (Giếng Đức Mẹ)', icon: 'VolunteerActivism', cat: 'hanhhuong', u: 0.4038, v: 0.5334, prominent: true },
 
   // --- Tòa nhà & khu vực ---
   { id: 'nha-trung-tam', name: 'Nhà trung tâm', icon: 'Domain', cat: 'toanha', u: 0.7972, v: 0.4256 },
@@ -36,8 +41,10 @@ export const POIS = [
   { id: 'cong-phu-4', name: 'Cổng phụ 4', icon: 'DoorFront', cat: 'toanha', u: 0.2454, v: 0.365 },
 
   // --- Hỗ trợ & y tế ---
-  { id: 'trai-trat-tu', name: 'Trại trật tự trung tâm', icon: 'Shield', cat: 'hotro', u: 0.6695, v: 0.5482 },
-  { id: 'trai-y-te', name: 'Trại y tế', icon: 'LocalHospital', cat: 'hotro', u: 0.7457, v: 0.6066 },
+  { id: 'trai-trat-tu', name: 'Trại trật tự trung tâm', icon: 'Shield', cat: 'hotro', u: 0.6695, v: 0.5482, prominent: true },
+  { id: 'trai-y-te', name: 'Trại y tế', icon: 'LocalHospital', cat: 'hotro', u: 0.7457, v: 0.6066, prominent: true },
+  { id: 'ban-ken-trong', name: 'Ban kèn trống', icon: 'MusicNote', cat: 'hotro', u: 0.6959, v: 0.3474, prominent: true },
+  { id: 'trai-tntt', name: 'Trại TNTT', icon: 'Diversity3', cat: 'hotro', u: 0.6959, v: 0.3974, prominent: true },
 
   // --- Tiện ích: nhà vệ sinh ---
   { id: 'nha-ve-sinh-1', name: 'Nhà vệ sinh 1', icon: 'Wc', cat: 'tienich', u: 0.219, v: 0.6354 },
@@ -45,6 +52,7 @@ export const POIS = [
   { id: 'nha-ve-sinh-3', name: 'Nhà vệ sinh 3', icon: 'Wc', cat: 'tienich', u: 0.8161, v: 0.4801 },
   { id: 'nha-ve-sinh-4', name: 'Nhà vệ sinh 4', icon: 'Wc', cat: 'tienich', u: 0.8021, v: 0.2831 },
   { id: 'nha-ve-sinh-5', name: 'Nhà vệ sinh 5', icon: 'Wc', cat: 'tienich', u: 0.2219, v: 0.3288 },
+  { id: 'nha-ve-sinh-6', name: 'Nhà vệ sinh 6', icon: 'Wc', cat: 'tienich', u: 0.2313, v: 0.5376, prominent: true },
 
   // --- Tiện ích: sạc điện thoại ---
   { id: 'sac-1', name: 'Sạc điện thoại 1', icon: 'ChargingStation', cat: 'tienich', u: 0.3015, v: 0.7202 },
