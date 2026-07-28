@@ -31,6 +31,7 @@ export default function App() {
   // 'splash' → 'campus' (nội khu, zoom tự do) ↔ 'region' (đường vào, khóa zoom)
   const [screen, setScreen] = useState(MODE === 'normal' ? 'splash' : 'campus')
   const [destination, setDestination] = useState(null)
+  const [routeMode, setRouteMode] = useState('main') // 'main' | 'short'
   const [detailPoi, setDetailPoi] = useState(null)
   const [showPlaces, setShowPlaces] = useState(false)
   const [layer, setLayer] = useState('tree')
@@ -45,23 +46,29 @@ export default function App() {
     userUV && userUV.u > -0.03 && userUV.u < 1.03 && userUV.v > -0.03 && userUV.v < 1.03
   const userCellKey = userUV ? `${Math.round(userUV.u * MASK_W)},${Math.round(userUV.v * MASK_H)}` : null
 
+  // Hai tuyến: "đường chính" (ưu tiên đường tím rộng) và "đường gần nhất".
   const routeInfo = useMemo(() => {
     if (!destination || !userUV) return null
     const inRange = (t) => t.u > -0.05 && t.u < 1.05 && t.v > -0.05 && t.v < 1.05
     if (!inRange(userUV) || !inRange(destination)) {
-      return {
-        path: [{ u: userUV.u, v: userUV.v }, { u: destination.u, v: destination.v }],
-        meters: pos ? straightDistance(cal, destination, pos) : 0,
-        dashed: true,
-      }
+      const straight = [{ u: userUV.u, v: userUV.v }, { u: destination.u, v: destination.v }]
+      const m = pos ? straightDistance(cal, destination, pos) : 0
+      return { dashed: true, main: { path: straight, meters: m }, short: { path: straight, meters: m } }
     }
-    const r = findRoute({ u: userUV.u, v: userUV.v }, { u: destination.u, v: destination.v })
-    if (!r) return null
-    return { path: r.path, meters: routeLength(cal, r.path), dashed: false }
+    const s = { u: userUV.u, v: userUV.v }, g = { u: destination.u, v: destination.v }
+    const rShort = findRoute(s, g, { mainPenalty: 1 })
+    const rMain = findRoute(s, g, { mainPenalty: 4 })
+    if (!rShort && !rMain) return null
+    const wrap = (r) => (r ? { path: r.path, meters: routeLength(cal, r.path) } : null)
+    return { dashed: false, main: wrap(rMain) || wrap(rShort), short: wrap(rShort) || wrap(rMain) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [destination, userCellKey, cal])
 
-  const arrived = routeInfo && routeInfo.meters < ARRIVED_M
+  // Hai tuyến gần bằng nhau (chênh < 5%) thì không cần chọn — chỉ hiện một.
+  const sameRoute = routeInfo && !routeInfo.dashed &&
+    Math.abs(routeInfo.main.meters - routeInfo.short.meters) / Math.max(1, routeInfo.short.meters) < 0.05
+  const active = routeInfo ? (routeMode === 'short' ? routeInfo.short : routeInfo.main) : null
+  const arrived = active && active.meters < ARRIVED_M
 
   const visiblePois = useMemo(() => {
     if (MODE === 'calibrate') return []
@@ -69,7 +76,7 @@ export default function App() {
     return POIS
   }, [destination])
 
-  useEffect(() => { if (destination) setFollow(false) }, [destination])
+  useEffect(() => { if (destination) { setFollow(false); setRouteMode('main') } }, [destination])
 
   // ---- Điều hướng ----
   const openDetail = (poi) => { setShowPlaces(false); setDetailPoi(poi) }
@@ -102,7 +109,10 @@ export default function App() {
         position={pos}
         follow={follow}
         onUserInteract={() => setFollow(false)}
-        route={routeInfo?.path ?? null}
+        routeMain={routeInfo && !routeInfo.dashed ? routeInfo.main.path : null}
+        routeShort={routeInfo && !routeInfo.dashed ? routeInfo.short.path : null}
+        routeActive={routeMode}
+        routeSingle={routeInfo?.dashed ? routeInfo.main.path : sameRoute ? active?.path : null}
         routeDashed={routeInfo?.dashed ?? false}
         fitKey={destination?.id ?? null}
       />
@@ -145,7 +155,9 @@ export default function App() {
           <Banners geo={geo} pos={pos} insideCampus={insideCampus} guiding={guiding} routeInfo={routeInfo} />
 
           {guiding && (
-            <GuideCard routeInfo={routeInfo} arrived={arrived} hasPosition={!!pos} insideCampus={insideCampus} />
+            <GuideCard routeInfo={routeInfo} active={active} arrived={arrived}
+              hasPosition={!!pos} insideCampus={insideCampus}
+              routeMode={routeMode} setRouteMode={setRouteMode} sameRoute={sameRoute} />
           )}
         </>
       )}
@@ -216,7 +228,8 @@ function RegionChrome({ onEnter }) {
   )
 }
 
-function GuideCard({ routeInfo, arrived, hasPosition, insideCampus }) {
+function GuideCard({ routeInfo, active, arrived, hasPosition, insideCampus, routeMode, setRouteMode, sameRoute }) {
+  const showChooser = routeInfo && !routeInfo.dashed && !sameRoute && !arrived
   return (
     <div className="guide-card glass">
       <div className="guide-row">
@@ -228,13 +241,13 @@ function GuideCard({ routeInfo, arrived, hasPosition, insideCampus }) {
             <div className="guide-time arrived">Bạn đã tới nơi</div>
           ) : routeInfo?.dashed ? (
             <>
-              <div className="guide-time">{formatDistance(routeInfo.meters)}</div>
+              <div className="guide-time">{formatDistance(active.meters)}</div>
               <div className="guide-dist">đường chim bay · điểm ngoài khuôn viên, đi theo biển chỉ dẫn</div>
             </>
-          ) : routeInfo ? (
+          ) : active ? (
             <>
-              <div className="guide-time">{walkMinutes(routeInfo.meters)} phút</div>
-              <div className="guide-dist">{formatDistance(routeInfo.meters)} · đi bộ</div>
+              <div className="guide-time">{walkMinutes(active.meters)} phút</div>
+              <div className="guide-dist">{formatDistance(active.meters)} · {routeMode === 'main' ? 'đường chính' : 'đường gần nhất'}</div>
             </>
           ) : (
             <div className="guide-wait">
@@ -243,6 +256,25 @@ function GuideCard({ routeInfo, arrived, hasPosition, insideCampus }) {
           )}
         </div>
       </div>
+
+      {showChooser && (
+        <div className="route-choose">
+          <button className={`route-opt${routeMode === 'main' ? ' on' : ''}`} onClick={() => setRouteMode('main')}>
+            <span className="route-swatch main" />
+            <span className="route-opt-text">
+              <b>Đường chính</b>
+              <span>{walkMinutes(routeInfo.main.meters)} phút · {formatDistance(routeInfo.main.meters)}</span>
+            </span>
+          </button>
+          <button className={`route-opt${routeMode === 'short' ? ' on' : ''}`} onClick={() => setRouteMode('short')}>
+            <span className="route-swatch short" />
+            <span className="route-opt-text">
+              <b>Gần nhất</b>
+              <span>{walkMinutes(routeInfo.short.meters)} phút · {formatDistance(routeInfo.short.meters)}</span>
+            </span>
+          </button>
+        </div>
+      )}
     </div>
   )
 }

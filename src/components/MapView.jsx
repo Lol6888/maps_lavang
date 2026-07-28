@@ -38,8 +38,11 @@ export default function MapView({
   position, // { lat, lng, accuracy, heading, stale } | null
   follow,
   onUserInteract,
-  route, // [{u, v}] | null — đường đi bộ tới đích
-  routeDashed, // true = đường chim bay (nét đứt), không phải lối đi thật
+  routeMain, // [{u,v}] tuyến đường chính
+  routeShort, // [{u,v}] tuyến gần nhất
+  routeActive, // 'main' | 'short' — tuyến đang chọn (vẽ nổi)
+  routeSingle, // [{u,v}] khi chỉ có 1 tuyến (2 tuyến trùng nhau)
+  routeDashed, // true = đường chim bay (nét đứt)
   fitKey, // đổi giá trị này để zoom vừa khít đường đi
 }) {
   // Chế độ thường vẽ trong khung "campus-up"; calibrate vẽ trong khung thật
@@ -368,29 +371,48 @@ export default function MapView({
       map.removeLayer(routeLayerRef.current)
       routeLayerRef.current = null
     }
-    if (!route || route.length < 2) return
-    const latlngs = route.map((p) => uvToLatLng(frame, p.u, p.v))
+    const toLL = (path) => path.map((p) => uvToLatLng(frame, p.u, p.v))
     const style = { lineCap: 'round', lineJoin: 'round', interactive: false }
-    const lines = routeDashed
-      ? [L.polyline(latlngs, { ...style, color: '#4285f4', weight: 5, dashArray: '2 12', opacity: 0.9 })]
-      : [
-          L.polyline(latlngs, { ...style, color: '#185abc', weight: 11, opacity: 0.9 }),
-          L.polyline(latlngs, { ...style, color: '#4285f4', weight: 7 }),
-        ]
-    routeLayerRef.current = L.layerGroup([
-      ...lines,
-      L.circleMarker(latlngs[latlngs.length - 1], {
-        radius: 7, color: '#fff', weight: 3, fillColor: '#ea4335', fillOpacity: 1, interactive: false,
-      }),
-    ]).addTo(map)
-  }, [route, routeDashed, frame])
+    const MAIN_C = '#3b6fd4', SHORT_C = '#0a9d63'
+    const layers = []
+    let endLL = null
+
+    if (routeSingle && routeSingle.length >= 2) {
+      const ll = toLL(routeSingle)
+      layers.push(L.polyline(ll, { ...style, color: '#185abc', weight: 11, opacity: 0.9 }))
+      layers.push(L.polyline(ll, { ...style, color: '#4285f4', weight: 7 }))
+      endLL = ll[ll.length - 1]
+    } else if (routeDashed && routeMain && routeMain.length >= 2) {
+      const ll = toLL(routeMain)
+      layers.push(L.polyline(ll, { ...style, color: '#4285f4', weight: 5, dashArray: '2 12', opacity: 0.9 }))
+      endLL = ll[ll.length - 1]
+    } else if (routeMain && routeShort) {
+      const activePath = routeActive === 'short' ? routeShort : routeMain
+      const otherPath = routeActive === 'short' ? routeMain : routeShort
+      const activeC = routeActive === 'short' ? SHORT_C : MAIN_C
+      // tuyến không chọn: mờ, nét đứt, nằm dưới
+      const other = toLL(otherPath)
+      layers.push(L.polyline(other, { ...style, color: '#8a93a5', weight: 5, opacity: 0.55, dashArray: '1 10' }))
+      // tuyến đang chọn: đậm, có viền trắng
+      const act = toLL(activePath)
+      layers.push(L.polyline(act, { ...style, color: '#fff', weight: 11, opacity: 0.95 }))
+      layers.push(L.polyline(act, { ...style, color: activeC, weight: 7 }))
+      endLL = act[act.length - 1]
+    }
+    if (!layers.length) return
+    if (endLL) layers.push(L.circleMarker(endLL, {
+      radius: 7, color: '#fff', weight: 3, fillColor: '#ea4335', fillOpacity: 1, interactive: false,
+    }))
+    routeLayerRef.current = L.layerGroup(layers).addTo(map)
+  }, [routeMain, routeShort, routeActive, routeSingle, routeDashed, frame])
 
   // Zoom vừa khít đường đi khi đổi đích
   useEffect(() => {
     const map = mapRef.current
-    if (!map || !fitKey || !route || route.length < 2) return
-    const b = L.latLngBounds(route.map((p) => uvToLatLng(frame, p.u, p.v)))
-    map.fitBounds(b, { padding: [70, 90], maxZoom: 19 })
+    const path = routeSingle || routeMain
+    if (!map || !fitKey || !path || path.length < 2) return
+    const b = L.latLngBounds(path.map((p) => uvToLatLng(frame, p.u, p.v)))
+    map.fitBounds(b, { padding: [70, 110], maxZoom: 19 })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fitKey])
 

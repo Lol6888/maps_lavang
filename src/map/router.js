@@ -1,4 +1,4 @@
-import { getWalkMask, MASK_W, MASK_H } from '../data/walkmask.js'
+import { getWalkMask, getMainMask, MASK_W, MASK_H } from '../data/walkmask.js'
 
 // Tìm đường đi bộ trên mặt nạ lối đi (A* 8 hướng) rồi rút gọn bằng line-of-sight.
 // Toàn bộ làm việc trong hệ tọa độ ảnh (u,v ∈ [0,1]).
@@ -60,7 +60,7 @@ const NEIGHBORS = [
 
 // A* đa nguồn / đa đích: tìm cặp (cửa vào, cửa ra) cho tổng quãng đường nhỏ nhất,
 // gồm cả đoạn đi ngoài lối đi ở hai đầu.
-function astar(mask, starts, goals, goalAim) {
+function astar(mask, starts, goals, goalAim, edgeMul) {
   const N = MASK_W * MASK_H
   const gScore = new Float32Array(N).fill(Infinity)
   const cameFrom = new Int32Array(N).fill(-1)
@@ -134,7 +134,7 @@ function astar(mask, starts, goals, goalAim) {
       if (!mask[ni] || closed[ni]) continue
       // đi chéo phải có cả 2 ô kề trống, tránh "cắt góc" xuyên tường
       if (dx && dy && (!mask[cellIndex(cx + dx, cy)] || !mask[cellIndex(cx, cy + dy)])) continue
-      const g = gScore[cur.i] + cost
+      const g = gScore[cur.i] + cost * (edgeMul ? edgeMul(ni) : 1)
       if (g < gScore[ni]) {
         gScore[ni] = g
         cameFrom[ni] = cur.i
@@ -171,15 +171,18 @@ function simplify(mask, path) {
  * Trả { path: [{u,v}...], snappedStart: bool, snappedGoal: bool } hoặc null nếu bế tắc.
  * Điểm đầu/cuối thật luôn được giữ nguyên; phần lệch khỏi lối đi nối bằng đoạn thẳng.
  */
-export function findRoute(start, goal) {
+export function findRoute(start, goal, { mainPenalty = 1 } = {}) {
   const mask = getWalkMask()
+  // mainPenalty > 1: đi vào ô KHÔNG phải đường chính đắt hơn -> ưu tiên đường chính.
+  const main = mainPenalty > 1 ? getMainMask() : null
+  const edgeMul = main ? (ni) => (main[ni] ? 1 : mainPenalty) : null
   const s0 = toCell(start.u, start.v)
   const g0 = toCell(goal.u, goal.v)
   const starts = accessPoints(mask, s0.cx, s0.cy)
   const goals = accessPoints(mask, g0.cx, g0.cy)
   if (!starts.length || !goals.length) return null
 
-  const cells = astar(mask, starts, goals, g0)
+  const cells = astar(mask, starts, goals, g0, edgeMul)
   if (!cells) return null
 
   const pts = simplify(mask, cells).map((c) => toUV(c.cx, c.cy))
