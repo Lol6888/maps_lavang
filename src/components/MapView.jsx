@@ -320,13 +320,26 @@ export default function MapView({
         prio: (poi.id === selectedPoiId ? 1000 : 0) + (poi.prominent ? 100 : 0) + (CAT_PRIO[poi.cat] ?? 1),
       }))
       .sort((a, b) => b.prio - a.prio)
+    // Nhãn hiển thị: bỏ phần trong ngoặc "(...)"; >=5 từ thì tách 2 dòng cho gọn.
+    const labelLines = (name) => {
+      const words = name.replace(/\s*\([^)]*\)/g, '').trim().split(/\s+/)
+      if (words.length < 5) return [words.join(' ')]
+      let cut = 1, bestDiff = Infinity
+      for (let i = 1; i < words.length; i++) {
+        const diff = Math.abs(words.slice(0, i).join(' ').length - words.slice(i).join(' ').length)
+        if (diff < bestDiff) { bestDiff = diff; cut = i }
+      }
+      return [words.slice(0, cut).join(' '), words.slice(cut).join(' ')]
+    }
     const tagRects = []
     const withTag = new Set()
     for (const { poi } of ranked) {
       if (!map) break
       const p = map.project(uvToLatLng(frame, poi.u, poi.v), z)
-      const w = poi.name.length * 6.4 + 44 // chấm + chữ (px)
-      const rect = { left: p.x - 16, right: p.x + w - 16, top: p.y - 12, bottom: p.y + 12 }
+      const lines = labelLines(poi.name)
+      const w = Math.max(...lines.map((l) => l.length)) * 6.4 + 44 // chấm + chữ (px)
+      const half = lines.length > 1 ? 19 : 12
+      const rect = { left: p.x - 16, right: p.x + w - 16, top: p.y - half, bottom: p.y + half }
       const hit = tagRects.some((r) =>
         !(rect.right + 3 < r.left || rect.left - 3 > r.right || rect.bottom + 2 < r.top || rect.top - 2 > r.bottom))
       if (!hit || poi.id === selectedPoiId) { tagRects.push(rect); withTag.add(poi.id) }
@@ -340,7 +353,7 @@ export default function MapView({
         className: '',
         html: `<div class="poi-chip${selected ? ' sel' : ''}" style="--c:${color}">
             <span class="poi-dot">${iconSvg(poi.icon, { size: 17, color: selected ? '#fff' : color })}</span>
-            ${tag ? `<span class="poi-tag${poi.prominent ? ' prom' : ''}">${poi.name}</span>` : ''}
+            ${tag ? `<span class="poi-tag${poi.prominent ? ' prom' : ''}">${labelLines(poi.name).join('<br>')}</span>` : ''}
           </div>`,
         iconSize: [30, 30],
         iconAnchor: [15, 15],
