@@ -17,7 +17,7 @@ export const POIS = [
   { id: 'duc-me-suoi', name: 'Đức Mẹ Suối', icon: 'Water', cat: 'hanhhuong', u: 0.5381, v: 0.1227, prominent: true },
   { id: 'vuong-cung-thanh-duong', name: 'Vương Cung Thánh Đường', icon: 'Church', cat: 'hanhhuong', u: 0.528, v: 0.3024, prominent: true },
   { id: 'khu-tu-dao', name: 'Quảng trường các thánh tử đạo', icon: 'AccountBalance', cat: 'hanhhuong', u: 0.236, v: 0.4914, prominent: true },
-  { id: 'linh-dai', name: 'Linh đài', icon: 'Church', cat: 'hanhhuong', u: 0.3445, v: 0.4898 },
+  { id: 'linh-dai', name: 'Linh đài', icon: 'Church', cat: 'hanhhuong', u: 0.3445, v: 0.4898, hero: true },
   { id: 'nha-chau-thanh-the', name: 'Nhà Chầu Thánh Thể', icon: 'Church', cat: 'hanhhuong', u: 0.3015, v: 0.5212, prominent: true },
   { id: 'thap-co', name: 'Tháp cổ', icon: 'AccountBalance', cat: 'hanhhuong', u: 0.524, v: 0.4599, prominent: true },
   { id: 'nha-nguyen', name: 'Nhà nguyện', icon: 'Church', cat: 'hanhhuong', u: 0.3726, v: 0.547, prominent: true },

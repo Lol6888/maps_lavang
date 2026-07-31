@@ -314,10 +314,10 @@ export default function MapView({
     const CAT_PRIO = { hanhhuong: 5, toanha: 4, hotro: 4, giaothong: 3, tienich: 2 }
     const z = map ? map.getZoom() : 17
     const ranked = visible
-      .filter((poi) => poi.id === selectedPoiId || poi.prominent || z >= REVEAL_ZOOM)
+      .filter((poi) => poi.id === selectedPoiId || poi.hero || poi.prominent || z >= REVEAL_ZOOM)
       .map((poi) => ({
         poi,
-        prio: (poi.id === selectedPoiId ? 1000 : 0) + (poi.prominent ? 100 : 0) + (CAT_PRIO[poi.cat] ?? 1),
+        prio: (poi.hero ? 5000 : 0) + (poi.id === selectedPoiId ? 1000 : 0) + (poi.prominent ? 100 : 0) + (CAT_PRIO[poi.cat] ?? 1),
       }))
       .sort((a, b) => b.prio - a.prio)
     // Nhãn hiển thị: bỏ phần trong ngoặc "(...)"; >=5 từ thì tách 2 dòng cho gọn.
@@ -337,26 +337,29 @@ export default function MapView({
       if (!map) break
       const p = map.project(uvToLatLng(frame, poi.u, poi.v), z)
       const lines = labelLines(poi.name)
-      const w = Math.max(...lines.map((l) => l.length)) * 6.4 + 44 // chấm + chữ (px)
-      const half = lines.length > 1 ? 19 : 12
-      const rect = { left: p.x - 16, right: p.x + w - 16, top: p.y - half, bottom: p.y + half }
+      // Nhãn nằm TRÊN chấm, canh giữa: hộp va chạm rộng theo chữ, cao lên phía trên.
+      const w = Math.max(...lines.map((l) => l.length)) * 6.4 + 18 // bề rộng nhãn (px)
+      const dotR = poi.hero ? 22 : 15
+      const labelH = lines.length * 15 + 8
+      const rect = { left: p.x - w / 2, right: p.x + w / 2, top: p.y - dotR - labelH - 6, bottom: p.y + dotR }
       const hit = tagRects.some((r) =>
         !(rect.right + 3 < r.left || rect.left - 3 > r.right || rect.bottom + 2 < r.top || rect.top - 2 > r.bottom))
-      if (!hit || poi.id === selectedPoiId) { tagRects.push(rect); withTag.add(poi.id) }
+      if (!hit || poi.id === selectedPoiId || poi.hero) { tagRects.push(rect); withTag.add(poi.id) }
     }
 
     for (const poi of visible) {
       const color = CATEGORIES[poi.cat]?.color || '#5f6368'
       const selected = poi.id === selectedPoiId
       const tag = withTag.has(poi.id)
+      const size = poi.hero ? 46 : 30
       const icon = L.divIcon({
         className: '',
-        html: `<div class="poi-chip${selected ? ' sel' : ''}" style="--c:${color}">
-            <span class="poi-dot">${iconSvg(poi.icon, { size: 17, color: selected ? '#fff' : color })}</span>
-            ${tag ? `<span class="poi-tag${poi.prominent ? ' prom' : ''}">${labelLines(poi.name).join('<br>')}</span>` : ''}
+        html: `<div class="poi-chip${selected ? ' sel' : ''}${poi.hero ? ' hero' : ''}" style="--c:${color}">
+            <span class="poi-dot">${iconSvg(poi.icon, { size: poi.hero ? 26 : 17, color: selected ? '#fff' : color })}</span>
+            ${tag ? `<span class="poi-tag${poi.hero ? ' hero' : poi.prominent ? ' prom' : ''}">${labelLines(poi.name).join('<br>')}</span>` : ''}
           </div>`,
-        iconSize: [30, 30],
-        iconAnchor: [15, 15],
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2],
       })
       // Marker CÓ title phải nằm trên lớp chấm-không-title để pill không bị đè.
       // (Leaflet xếp z theo vĩ độ; +offset lớn đẩy pill lên trên mọi chấm.)

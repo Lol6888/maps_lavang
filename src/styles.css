@@ -327,15 +327,17 @@ button { font-family: inherit; }
 .tile-dist { margin-top: auto; padding-top: 8px; font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 600; color: var(--gold-l); }
 
 /* ============ Marker POI (chấm + title) trên artwork sáng ============ */
-.poi-chip { display: flex; align-items: center; white-space: nowrap; }
+/* Chấm canh giữa điểm neo; nhãn nằm TRÊN chấm, canh giữa theo chấm. */
+.poi-chip { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
 .poi-dot {
-  width: 30px; height: 30px; border-radius: 50%; flex: 0 0 auto;
+  width: 100%; height: 100%; border-radius: 50%;
   background: #fff; border: 2px solid var(--c); color: var(--c);
   display: flex; align-items: center; justify-content: center;
   box-shadow: 0 1px 5px rgba(0,0,0,.45);
 }
 .poi-tag {
-  margin-left: 5px; padding: 3px 9px; border-radius: 11px;
+  position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%);
+  padding: 3px 9px; border-radius: 11px;
   background: rgba(255,255,255,.96); color: #16283f;
   font-family: 'Be Vietnam Pro', sans-serif; font-size: 11.5px; font-weight: 600;
   border: 1px solid rgba(6,20,46,.08); box-shadow: 0 1px 4px rgba(0,0,0,.28);
@@ -345,6 +347,13 @@ button { font-family: inherit; }
 .poi-tag.prom {
   background: var(--navy); color: var(--gold-l);
   border-color: rgba(197,160,89,.55); font-weight: 700;
+}
+/* Linh đài — điểm quan trọng nhất: chấm to, nhãn đỏ nổi bật */
+.poi-chip.hero .poi-dot { border-width: 3px; box-shadow: 0 2px 8px rgba(0,0,0,.5); }
+.poi-tag.hero {
+  background: #c0261f; color: #fff; border-color: rgba(255,255,255,.6);
+  font-weight: 800; font-size: 13.5px; padding: 4px 12px; border-radius: 13px;
+  bottom: calc(100% + 6px); box-shadow: 0 2px 7px rgba(0,0,0,.4);
 }
 .poi-chip.sel .poi-dot {
   background: var(--c); border-color: #fff; color: #fff;
