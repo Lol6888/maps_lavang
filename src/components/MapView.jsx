@@ -19,7 +19,7 @@ const GUIDE_POINTS = [
 
 const MAP_URLS = {
   tree: '/map/base-tree-4096.webp',
-  notree: '/map/base-notree-4096.webp',
+  notree: '/map/base-notree-4096-v2.webp',
 }
 
 const ESRI_SAT = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
