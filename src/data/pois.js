@@ -43,7 +43,7 @@ export const POIS = [
 
   // --- Hỗ trợ & y tế ---
   { id: 'trai-trat-tu', name: 'Trại trật tự trung tâm', icon: 'Shield', cat: 'hotro', u: 0.6695, v: 0.5482, prominent: true },
-  { id: 'trai-y-te', name: 'Trại y tế', icon: 'LocalHospital', cat: 'hotro', u: 0.7457, v: 0.6066, prominent: true },
+  { id: 'trai-y-te', name: 'Nhà Y Tế', icon: 'LocalHospital', cat: 'hotro', u: 0.7457, v: 0.6066, prominent: true },
   { id: 'ban-ken-trong', name: 'Ban kèn trống', icon: 'MusicNote', cat: 'hotro', u: 0.6959, v: 0.3474, prominent: true },
   { id: 'trai-tntt', name: 'Trại TNTT', icon: 'Diversity3', cat: 'hotro', u: 0.6959, v: 0.3974, prominent: true },
 

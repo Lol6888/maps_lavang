@@ -38,9 +38,9 @@ function resolve(parent, leaf) {
   if (has(n, 'Y Tế')) return { ids: ['trai-y-te'], slug: 'trai-y-te' }
   if (has(n, 'Cổng Chính')) return { ids: ['cong-chinh'], slug: 'cong-chinh' }
   if (has(n, 'Cổng Phụ 1')) return { ids: ['cong-phu-1'], slug: 'cong-phu-1' } // dưới trái
-  if (has(n, 'Cổng Phụ 2')) return { ids: ['cong-phu-4'], slug: 'cong-phu-4' } // trên trái
+  if (has(n, 'Cổng Phụ 2')) return { ids: ['cong-phu-2'], slug: 'cong-phu-2' }
   if (has(n, 'Cổng Phụ 3')) return { ids: ['cong-phu-3'], slug: 'cong-phu-3' } // trên phải
-  if (has(n, 'Cổng Phụ 4')) return { ids: ['cong-phu-2'], slug: 'cong-phu-2' } // dưới phải
+  if (has(n, 'Cổng Phụ 4')) return { ids: ['cong-phu-4'], slug: 'cong-phu-4' }
   if (has(n, 'phát nước và thực') || has(n, 'thực')) return { ids: ['diem-thuc-pham-4'], slug: 'thuc-pham' }
   if (has(parent, 'sạc') || has(n, 'sạc')) return { ids: ['sac-1', 'sac-2', 'sac-3', 'sac-4', 'sac-5', 'sac-6', 'sac-7'], slug: 'sac' }
   if (has(parent, 'phát nước') || has(n, 'phát nước')) return { ids: ['phat-nuoc-1', 'phat-nuoc-2', 'phat-nuoc-3'], slug: 'phat-nuoc' }
