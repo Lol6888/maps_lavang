@@ -46,6 +46,7 @@ function resolve(parent, leaf) {
   if (has(parent, 'phát nước') || has(n, 'phát nước')) return { ids: ['phat-nuoc-1', 'phat-nuoc-2', 'phat-nuoc-3'], slug: 'phat-nuoc' }
   if (has(parent, 'vệ sinh') || has(n, 'vệ sinh')) return { ids: ['nha-ve-sinh-1', 'nha-ve-sinh-2', 'nha-ve-sinh-3', 'nha-ve-sinh-4', 'nha-ve-sinh-5', 'nha-ve-sinh-6'], slug: 'nha-ve-sinh' }
   if (has(parent, 'xin lễ') || has(n, 'xin lễ') || has(n, 'dâng cúng')) return { ids: ['xin-le-1', 'xin-le-2', 'xin-le-3', 'xin-le-4'], slug: 'xin-le' }
+  if (has(parent, 'lưu niệm') || has(n, 'lưu niệm')) return { ids: ['quay-luu-niem-1', 'quay-luu-niem-2'], slug: 'quay-luu-niem' }
   if (has(parent, 'kèn') || has(n, 'kèn')) return { ids: ['ban-ken-trong'], slug: 'ban-ken-trong' }
   if (has(parent, 'TNTT') || has(n, 'TNTT')) return { ids: ['trai-tntt'], slug: 'tntt' }
   return null

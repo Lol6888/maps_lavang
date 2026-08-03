@@ -16,7 +16,7 @@ const ICONS = [
   // "tháp"/"tượng đài" nên các công trình di tích dùng chung account_balance
   'church', 'account_balance', 'water', 'water_drop', 'local_drink', 'restaurant',
   'wc', 'charging_station', 'hotel', 'night_shelter', 'domain', 'groups',
-  'door_front', 'shield', 'local_hospital', 'volunteer_activism',
+  'door_front', 'shield', 'local_hospital', 'volunteer_activism', 'storefront',
   // đi lại
   'directions_bus', 'local_parking',
   // nhóm / hoạt động

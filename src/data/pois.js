@@ -70,6 +70,10 @@ export const POIS = [
   { id: 'phat-nuoc-3', name: 'Điểm phát nước 3', icon: 'LocalDrink', cat: 'tienich', u: 0.458, v: 0.7057, prominent: true },
   { id: 'diem-thuc-pham-4', name: 'Điểm thực phẩm và nước 4', icon: 'Restaurant', cat: 'tienich', u: 0.5772, v: 0.6138, prominent: true },
 
+  // --- Quầy lưu niệm ---
+  { id: 'quay-luu-niem-1', name: 'Quầy lưu niệm 1', icon: 'Storefront', cat: 'tienich', u: 0.800, v: 0.461, prominent: true },
+  { id: 'quay-luu-niem-2', name: 'Quầy lưu niệm 2', icon: 'Storefront', cat: 'tienich', u: 0.800, v: 0.505, prominent: true },
+
   // --- Đi lại & đỗ xe ---
   { id: 'cong-chinh', name: 'Cổng chính (Điểm đón trả khách)', icon: 'DirectionsBus', cat: 'giaothong', u: 0.4998, v: 0.9216, prominent: true },
   // Bãi đỗ xe nằm ngoài khuôn viên (uv ngoài [0,1] — hợp lệ). Cần đo thực địa chỉnh lại.
