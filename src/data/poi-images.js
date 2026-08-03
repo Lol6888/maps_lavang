@@ -1,6 +1,12 @@
 // TỰ SINH bởi scripts/gen-poi-images.mjs — đừng sửa tay.
 // Ảnh minh họa từng điểm (đã convert HEIC/JPG/PNG -> webp). DetailPopup dùng khi mở popup.
 export const POI_IMAGES = {
+ "quay-luu-niem-1": [
+  "/img/poi/quay-luu-niem/1.webp"
+ ],
+ "quay-luu-niem-2": [
+  "/img/poi/quay-luu-niem/1.webp"
+ ],
  "gieng-duc-me": [
   "/img/poi/gieng-duc-me/1.webp",
   "/img/poi/gieng-duc-me/2.webp",
